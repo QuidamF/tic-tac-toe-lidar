@@ -1,0 +1,10 @@
+/* Reset index.css to avoid conflicts with App.css */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0A0D14;
+}
+#root {
+  width: 100%;
+  min-height: 100vh;
+}

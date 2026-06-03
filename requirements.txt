@@ -1,0 +1,16 @@
+# ------------------------------------------------------------------------------
+# Dependencias para RPLidar C1 en Raspberry Pi
+# Instalar usando: pip install -r requirements.txt
+# ------------------------------------------------------------------------------
+
+# Dependencia principal para comunicación serial
+pyserial>=3.5
+
+# Opcional: Instalar el paquete local rplidarc1
+# Nota: Después de instalar requirements.txt, asegúrate de instalar el paquete
+# local en modo editable con el siguiente comando en la carpeta raíz:
+#
+#   pip install -e ./rplidarc1
+#
+# O si prefieres instalarlo directamente desde el requirements, descomenta la línea de abajo:
+-e ./rplidarc1
