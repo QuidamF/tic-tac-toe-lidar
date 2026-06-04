@@ -20,9 +20,233 @@ mock_touch_timer = 0.0
 # Bandera de estado del hardware
 lidar_active = False
 lidar_device = None
-
-# Tarea global para controlar la animación ganadora de LEDs
+# Tarea global para controlar la animación ganadora de LEDs y temporizadores de partida
 winning_animation_task = None
+cpu_task = None
+game_timer_task = None
+auto_reset_task = None
+game_timer_start_time = 0.0
+
+def reset_game_state_service():
+    """Reinicia el estado del temporizador global, de la CPU y auto-reset al comenzar partida."""
+    global winning_animation_task, cpu_task, game_timer_task, auto_reset_task, game_timer_start_time
+    
+    # Cancelar animaciones y tareas de fondo
+    if winning_animation_task and not winning_animation_task.done():
+        winning_animation_task.cancel()
+    if cpu_task and not cpu_task.done():
+        cpu_task.cancel()
+    if game_timer_task and not game_timer_task.done():
+        game_timer_task.cancel()
+    if auto_reset_task and not auto_reset_task.done():
+        auto_reset_task.cancel()
+        
+    game.reset()
+    
+    # Resetear tiempo de inicio del temporizador global (esperando primer toque)
+    game_timer_start_time = 0.0
+    
+    # Si le toca a la CPU de inicio
+    if runtime_config.get("game_mode", "pvp") == "pvcpu" and game.current_player == "O":
+        trigger_cpu_move_if_needed()
+
+def start_game_timer():
+    """Inicia o reinicia el temporizador global de juego si está habilitado."""
+    global game_timer_task, game_timer_start_time
+    
+    # Cancelar el temporizador anterior
+    if game_timer_task and not game_timer_task.done():
+        game_timer_task.cancel()
+        
+    if game.winner:
+        return
+        
+    if runtime_config.get("time_limit_enabled", False):
+        if game_timer_start_time <= 0.0:
+            game_timer_start_time = time.time()
+            
+        limit = int(runtime_config.get("time_limit_seconds", 120))
+        elapsed = time.time() - game_timer_start_time
+        remaining = max(0.1, limit - elapsed)
+        
+        game_timer_task = asyncio.create_task(run_game_timer(remaining))
+
+async def run_game_timer(remaining):
+    try:
+        # Esperar los segundos indicados
+        await asyncio.sleep(remaining)
+        
+        # Si se agota el tiempo, determinar ganador por conteo de fichas en tablero
+        print("[TIMER] ¡Se agotó el tiempo global de la partida!")
+        
+        if not game.winner:
+            x_count = list(game.board.values()).count("X")
+            o_count = list(game.board.values()).count("O")
+            
+            if x_count > o_count:
+                game.winner = "X"
+            elif o_count > x_count:
+                game.winner = "O"
+            else:
+                game.winner = "draw"
+            game.winning_line = []
+            
+            # Emitir estado actualizado
+            await emit_game_state({
+                "board": game.board,
+                "current_player": game.current_player,
+                "winner": game.winner,
+                "winning_line": game.winning_line
+            })
+            
+            # Notificar ganador por MQTT
+            publish_game_state("winner", {"winner": game.winner, "winning_line": game.winning_line})
+            
+            # Iniciar animación física ganadora de LEDs si no es empate
+            if game.winner != "draw":
+                global winning_animation_task
+                if winning_animation_task and not winning_animation_task.done():
+                    winning_animation_task.cancel()
+                winning_animation_task = asyncio.create_task(run_winning_animation(game.winner, game.winning_line, runtime_config))
+                
+            # Disparar auto-reset tras terminar la partida
+            trigger_auto_reset()
+            
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:
+        print(f"[TIMER] Error en el temporizador global: {e}")
+
+def trigger_auto_reset():
+    """Agenda el auto-reinicio de la partida si ya hay un ganador o empate."""
+    global auto_reset_task
+    if auto_reset_task and not auto_reset_task.done():
+        auto_reset_task.cancel()
+    auto_reset_task = asyncio.create_task(run_auto_reset())
+
+async def run_auto_reset():
+    try:
+        cooldown = int(runtime_config.get("auto_reset_seconds", 10))
+        # Esperar x segundos
+        await asyncio.sleep(cooldown)
+        print(f"[GAMEPLAY] Auto-reiniciando partida tras {cooldown} segundos de fin de juego.")
+        reset_game_state_service()
+        # Emitir estado del juego reiniciado
+        await emit_game_state({
+            "board": game.board,
+            "current_player": game.current_player,
+            "winner": game.winner,
+            "winning_line": game.winning_line
+        })
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:
+        print(f"[GAMEPLAY] Error en auto-reset: {e}")
+
+def trigger_cpu_move_if_needed():
+    """Si está activo el modo PVCPU y le toca al CPU ('O'), agenda su movimiento."""
+    global cpu_task
+    # Cancelar tarea previa de CPU si existiera
+    if cpu_task and not cpu_task.done():
+        cpu_task.cancel()
+        
+    if runtime_config.get("game_mode", "pvp") == "pvcpu" and game.current_player == "O" and not game.winner:
+        cpu_task = asyncio.create_task(run_cpu_move_delayed())
+
+async def run_cpu_move_delayed():
+    try:
+        # Retardo de 1 segundo para simular "pensamiento" de la CPU
+        await asyncio.sleep(1.0)
+        
+        cell_name = select_cpu_move()
+        if cell_name:
+            print(f"[CPU] Selecciona celda: {cell_name}")
+            handle_press(cell_name)
+    except asyncio.CancelledError:
+        pass
+    except Exception as e:
+        print(f"[CPU] Error en jugada de CPU: {e}")
+
+def select_cpu_move():
+    """
+    Selecciona la mejor celda para la CPU ('O') según las reglas de Tic-Tac-Toe
+    y las opciones de robo/casilla vacía.
+    """
+    board = game.board
+    steal_enabled = runtime_config.get("steal_enabled", True)
+    
+    # 1. Buscar si hay una celda vacía o robable que le dé la victoria inmediata a CPU ("O")
+    best_move = find_winning_move("O", "O", steal_enabled)
+    if best_move:
+        return best_move
+        
+    # 2. Buscar si hay una celda vacía o robable que bloquee la victoria inmediata del Jugador ("X")
+    block_move = find_winning_move("X", "O", steal_enabled)
+    if block_move:
+        return block_move
+        
+    # 3. Tratar de tomar el centro si está vacío (o robable si es del oponente)
+    if "center" in board:
+        if board["center"] == "":
+            return "center"
+        elif steal_enabled and board["center"] == "X":
+            return "center"
+            
+    # 4. Tratar de tomar esquinas vacías
+    corners = ["top_left", "top_right", "bottom_left", "bottom_right"]
+    random.shuffle(corners)
+    for corner in corners:
+        if board[corner] == "":
+            return corner
+            
+    # 5. Tomar esquinas robables
+    if steal_enabled:
+        for corner in corners:
+            if board[corner] == "X":
+                return corner
+                
+    # 6. Tomar cualquier celda vacía disponible
+    empty_cells = [k for k, v in board.items() if v == ""]
+    if empty_cells:
+        return random.choice(empty_cells)
+        
+    # 7. Robar cualquier celda del oponente disponible
+    if steal_enabled:
+        opponent_cells = [k for k, v in board.items() if v == "X"]
+        if opponent_cells:
+            return random.choice(opponent_cells)
+            
+    return None
+
+def find_winning_move(target_player, current_player, steal_enabled):
+    """
+    Encuentra una celda tal que si target_player la ocupa, completa una línea de 3.
+    """
+    board = game.board
+    lines = [
+        # Horizontales
+        ["top_left", "top_center", "top_right"],
+        ["mid_left", "center", "mid_right"],
+        ["bottom_left", "bottom_center", "bottom_right"],
+        # Verticales
+        ["top_left", "mid_left", "bottom_left"],
+        ["top_center", "center", "bottom_center"],
+        ["top_right", "mid_right", "bottom_right"],
+        # Diagonales
+        ["top_left", "center", "bottom_right"],
+        ["top_right", "center", "bottom_left"]
+    ]
+    
+    for line in lines:
+        vals = [board[cell] for cell in line]
+        if vals.count(target_player) == 2:
+            for cell in line:
+                val = board[cell]
+                if val == "":
+                    return cell
+                elif val != current_player and steal_enabled:
+                    return cell
+    return None
 
 def trigger_mock_touch(x: float, y: float):
     """Permite inyectar una coordenada simulada desde la API."""
@@ -41,7 +265,19 @@ def handle_press(cell_name: str):
     
     # 1. Intentar hacer la jugada en el Gato
     prev_winner = game.winner
-    moved = game.make_move(cell_name)
+    prev_player = game.current_player
+    
+    # Determinar si el tablero estaba vacío antes de la jugada
+    is_first_move = all(v == "" or v is None for v in game.board.values())
+    
+    moved = game.make_move(cell_name, runtime_config)
+    
+    if moved and is_first_move:
+        print("[GAMEPLAY] Primer tiro registrado. Iniciando temporizador global de juego.")
+        start_game_timer()
+    
+    # Evaluar si el turno cambió (sea por jugada válida, o por un intento fallido en modo un solo intento)
+    turn_changed = moved or (prev_player != game.current_player)
     
     # 2. Emitir eventos de Socket.IO
     asyncio.create_task(emit_gameplay(cell_name, "press"))
@@ -67,18 +303,32 @@ def handle_press(cell_name: str):
     
     if moved and game.winner != prev_winner:
         publish_game_state("winner", {"winner": game.winner, "winning_line": game.winning_line})
+        # Cancelar temporizador global
+        if game_timer_task and not game_timer_task.done():
+            game_timer_task.cancel()
         # Cancelar animación previa si existiera
         if winning_animation_task and not winning_animation_task.done():
             winning_animation_task.cancel()
         # Iniciar animación física ganadora de LEDs
         winning_animation_task = asyncio.create_task(run_winning_animation(game.winner, game.winning_line, runtime_config))
+        # Disparar auto-reset tras terminar la partida
+        trigger_auto_reset()
+
+    # Si el juego no ha terminado y el turno cambió, disparar CPU si le toca
+    if not game.winner and turn_changed:
+        if runtime_config.get("game_mode", "pvp") == "pvcpu" and game.current_player == "O":
+            trigger_cpu_move_if_needed()
 
 def cancel_winning_animation():
-    """Cancela la animación ganadora de LEDs si está activa."""
-    global winning_animation_task
+    """Cancela la animación ganadora de LEDs y las tareas de juego si están activas."""
+    global winning_animation_task, cpu_task, game_timer_task
     if winning_animation_task and not winning_animation_task.done():
         winning_animation_task.cancel()
         print("[LiDAR] Petición de cancelación de animación ganadora enviada.")
+    if cpu_task and not cpu_task.done():
+        cpu_task.cancel()
+    if game_timer_task and not game_timer_task.done():
+        game_timer_task.cancel()
 
 async def run_winning_animation(winner: str, winning_line: list, config: dict):
     """

@@ -40,6 +40,14 @@ DEFAULT_CONFIG = {
     # Audio
     "default_audio_sink": "",
 
+    # Opciones de Gameplay
+    "game_mode": "pvp",              # "pvp" o "pvcpu"
+    "time_limit_enabled": False,     # True o False
+    "time_limit_seconds": 120,        # Segundos por partida global
+    "single_attempt_mode": False,    # True (un intento por turno) o False (hasta que consiga)
+    "steal_enabled": True,           # True (se permite robar casilla) o False (sólo vacías)
+    "auto_reset_seconds": 10,        # Segundos antes de auto-reiniciar al terminar juego
+
     # Mapeos GPIO de las celdas (para el impacto/toque activo del ESP32)
     "gpio_top_left": -1,
     "gpio_top_center": -1,

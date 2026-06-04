@@ -98,7 +98,51 @@ const GameplayBoardOnly = ({ gameState, onReset, config, onSimulateTouch, socket
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showHeader, setShowHeader] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [timerProgress, setTimerProgress] = useState(100);
+  const [resetCountdown, setResetCountdown] = useState(0);
+
+  useEffect(() => {
+    if (!gameState.time_limit_enabled || !!winner) {
+      setTimeLeft(0);
+      setTimerProgress(100);
+      return;
+    }
+
+    const updateTimer = () => {
+      const limit = gameState.time_limit_seconds || 120;
+      if (!gameState.game_timer_start_time || gameState.game_timer_start_time <= 0) {
+        setTimeLeft(limit);
+        setTimerProgress(100);
+        return;
+      }
+      const elapsed = Date.now() / 1000 - gameState.game_timer_start_time;
+      const remaining = Math.max(0, limit - elapsed);
+      setTimeLeft(Math.ceil(remaining));
+      setTimerProgress((remaining / limit) * 100);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 100);
+    return () => clearInterval(interval);
+  }, [gameState.time_limit_enabled, gameState.game_timer_start_time, gameState.time_limit_seconds, winner]);
+
+  useEffect(() => {
+    if (!winner) {
+      setResetCountdown(0);
+      return;
+    }
+    const duration = gameState.auto_reset_seconds || 10;
+    setResetCountdown(duration);
+
+    const interval = setInterval(() => {
+      setResetCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [winner, gameState.auto_reset_seconds]);
+
+
+
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -226,7 +270,9 @@ const GameplayBoardOnly = ({ gameState, onReset, config, onSimulateTouch, socket
                     ¡JUGADOR {winner} VICTORIOSO!
                   </h1>
                 )}
-                <p className="hud-subtitle">Partida terminada</p>
+                <p className="hud-subtitle">
+                  Partida terminada {resetCountdown > 0 && `(Reiniciando en ${resetCountdown}s)`}
+                </p>
               </div>
             ) : (
               <div className="hud-turn">
@@ -234,6 +280,36 @@ const GameplayBoardOnly = ({ gameState, onReset, config, onSimulateTouch, socket
                 <div className="turn-indicator">
                   <span className={`turn-badge ${current_player}`}>
                     JUGADOR {current_player}
+                  </span>
+                  {gameState.game_mode === "pvcpu" && current_player === "O" && (
+                    <span className="cpu-thinking-badge"> (CPU Pensando...)</span>
+                  )}
+                </div>
+
+                {gameState.time_limit_enabled && (
+                  <div className="turn-timer-container" style={{ width: "260px", margin: "10px auto 0 auto" }}>
+                    <div className="turn-timer-header">
+                      <span>Tiempo de Juego:</span>
+                      <span><strong>{timeLeft}s</strong></span>
+                    </div>
+                    <div className="turn-timer-track">
+                      <div 
+                        className={`turn-timer-bar ${timeLeft <= 5 ? "warning" : ""}`}
+                        style={{ width: `${timerProgress}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="gameplay-rules-badges" style={{ justifyContent: "center", marginTop: "12px" }}>
+                  <span className="rule-badge">
+                    {gameState.game_mode === "pvcpu" ? "🤖 vs CPU" : "👥 PVP"}
+                  </span>
+                  <span className="rule-badge">
+                    {gameState.steal_enabled ? "⚔️ Robo Habilitado" : "🚫 Sin Robo"}
+                  </span>
+                  <span className="rule-badge">
+                    {gameState.single_attempt_mode ? "🎯 1 Intento" : "🔄 Intentos Libres"}
                   </span>
                 </div>
               </div>

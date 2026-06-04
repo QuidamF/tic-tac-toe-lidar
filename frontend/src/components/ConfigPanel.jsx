@@ -6,9 +6,12 @@ const ConfigPanel = ({ config, onConfigChange, onSave, onCalibrate, lidarConnect
   
   const handleChange = (key, val) => {
     let parsedVal = val;
-    // Cast strings representing numbers to floats/ints
-    if (val !== "" && !isNaN(val)) {
-      parsedVal = parseFloat(val);
+    if (typeof val === "string") {
+      if (val === "true") parsedVal = true;
+      else if (val === "false") parsedVal = false;
+      else if (val !== "" && !isNaN(val)) {
+        parsedVal = parseFloat(val);
+      }
     }
     onConfigChange({ ...config, [key]: parsedVal });
   };
@@ -42,17 +45,23 @@ const ConfigPanel = ({ config, onConfigChange, onSave, onCalibrate, lidarConnect
           className={`tab-btn ${activeTab === "lidar" ? "active" : ""}`}
           onClick={() => setActiveTab("lidar")}
         >
-          🎯 LiDAR y Juego
+          🎯 LiDAR
+        </button>
+        <button
+          className={`tab-btn ${activeTab === "gameplay" ? "active" : ""}`}
+          onClick={() => setActiveTab("gameplay")}
+        >
+          🎮 Reglas
         </button>
         <button
           className={`tab-btn ${activeTab === "audio" ? "active" : ""}`}
           onClick={() => setActiveTab("audio")}
         >
-          🔊 Conectividad y Audio
+          🔊 Audio
         </button>
       </div>
 
-      {activeTab === "lidar" ? (
+      {activeTab === "lidar" && (
         <>
           {/* Sección LiDAR */}
           <div className="panel-section">
@@ -313,7 +322,108 @@ const ConfigPanel = ({ config, onConfigChange, onSave, onCalibrate, lidarConnect
             </button>
           </div>
         </>
-      ) : (
+      )}
+
+      {activeTab === "gameplay" && (
+        <>
+          <div className="panel-section">
+            <h3>🎮 Reglas y Modos de Juego</h3>
+            
+            <div className="input-group">
+              <label>Modo de Juego</label>
+              <select
+                value={config.game_mode || "pvp"}
+                onChange={(e) => handleChange("game_mode", e.target.value)}
+              >
+                <option value="pvp">👥 Jugador vs Jugador (PVP)</option>
+                <option value="pvcpu">🤖 Jugador vs CPU (PVCPU)</option>
+              </select>
+              <p className="help-text">
+                Define si juegan dos personas físicamente o si la máquina controla al Jugador O.
+              </p>
+            </div>
+
+            <div className="input-group checkbox-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={config.time_limit_enabled === true || config.time_limit_enabled === "true"}
+                  onChange={(e) => handleChange("time_limit_enabled", e.target.checked)}
+                />
+                <span>⏱️ Límite de Tiempo de Partida</span>
+              </label>
+              <p className="help-text">
+                Si se activa, la partida expira automáticamente tras agotarse el tiempo global de juego.
+              </p>
+            </div>
+
+            {(config.time_limit_enabled === true || config.time_limit_enabled === "true") && (
+              <div className="input-group animate-fade-in">
+                <label>Tiempo de Juego ({config.time_limit_seconds || 120} s)</label>
+                <input
+                  type="range"
+                  min="10"
+                  max="300"
+                  step="10"
+                  value={config.time_limit_seconds || 120}
+                  onChange={(e) => handleChange("time_limit_seconds", e.target.value)}
+                />
+              </div>
+            )}
+
+            <div className="input-group">
+              <label>Re-inicio Automático ({config.auto_reset_seconds || 10} s)</label>
+              <input
+                type="range"
+                min="3"
+                max="30"
+                step="1"
+                value={config.auto_reset_seconds || 10}
+                onChange={(e) => handleChange("auto_reset_seconds", e.target.value)}
+              />
+              <p className="help-text">
+                Segundos de espera tras finalizar el juego (por victoria o empate) antes de reiniciar la partida automáticamente.
+              </p>
+            </div>
+
+            <div className="input-group">
+              <label>Intento por Turno</label>
+              <select
+                value={config.single_attempt_mode === true || config.single_attempt_mode === "true" ? "true" : "false"}
+                onChange={(e) => handleChange("single_attempt_mode", e.target.value === "true")}
+              >
+                <option value="false">🔄 Cambio de turno hasta conseguir casilla (libre)</option>
+                <option value="true">🎯 Solo 1 intento por turno (tiro fallido cambia turno)</option>
+              </select>
+              <p className="help-text">
+                En modo "Solo 1 intento", si se lanza a una celda no válida (ej. ocupada o ya ganada), se pierde el intento y cambia el turno.
+              </p>
+            </div>
+
+            <div className="input-group checkbox-group">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={config.steal_enabled === undefined ? true : (config.steal_enabled === true || config.steal_enabled === "true")}
+                  onChange={(e) => handleChange("steal_enabled", e.target.checked)}
+                />
+                <span>⚔️ Permitir Robar Casilla</span>
+              </label>
+              <p className="help-text">
+                Permite a los jugadores robar casillas que ya pertenecen al oponente.
+              </p>
+            </div>
+          </div>
+
+          <div className="panel-actions">
+            <button className="btn btn-primary" onClick={onSave}>
+              Guardar Cambios
+            </button>
+          </div>
+        </>
+      )}
+
+      {activeTab === "audio" && (
         <BluetoothAudioPanel />
       )}
     </div>

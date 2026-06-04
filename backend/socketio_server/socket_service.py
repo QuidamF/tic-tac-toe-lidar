@@ -82,6 +82,23 @@ async def emit_game_state(game_data: dict):
     """
     global _last_game_state
     
+    from config.runtime import runtime_config
+    try:
+        from lidar.lidar_service import game_timer_start_time
+    except ImportError:
+        game_timer_start_time = 0.0
+        
+    game_data = {
+        **game_data,
+        "time_limit_enabled": runtime_config.get("time_limit_enabled", False),
+        "time_limit_seconds": int(runtime_config.get("time_limit_seconds", 120)),
+        "game_timer_start_time": game_timer_start_time,
+        "game_mode": runtime_config.get("game_mode", "pvp"),
+        "single_attempt_mode": runtime_config.get("single_attempt_mode", False),
+        "steal_enabled": runtime_config.get("steal_enabled", True),
+        "auto_reset_seconds": int(runtime_config.get("auto_reset_seconds", 10))
+    }
+    
     await sio.emit('game_state', game_data)
     
     try:

@@ -1,7 +1,50 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 const GameBoard = ({ gameState, onReset, config, onSimulateTouch }) => {
   const { board, current_player, winner } = gameState;
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [timerProgress, setTimerProgress] = useState(100);
+  const [resetCountdown, setResetCountdown] = useState(0);
+
+  useEffect(() => {
+    if (!gameState.time_limit_enabled || !!winner) {
+      setTimeLeft(0);
+      setTimerProgress(100);
+      return;
+    }
+
+    const updateTimer = () => {
+      const limit = gameState.time_limit_seconds || 120;
+      if (!gameState.game_timer_start_time || gameState.game_timer_start_time <= 0) {
+        setTimeLeft(limit);
+        setTimerProgress(100);
+        return;
+      }
+      const elapsed = Date.now() / 1000 - gameState.game_timer_start_time;
+      const remaining = Math.max(0, limit - elapsed);
+      setTimeLeft(Math.ceil(remaining));
+      setTimerProgress((remaining / limit) * 100);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 100);
+    return () => clearInterval(interval);
+  }, [gameState.time_limit_enabled, gameState.game_timer_start_time, gameState.time_limit_seconds, winner]);
+
+  useEffect(() => {
+    if (!winner) {
+      setResetCountdown(0);
+      return;
+    }
+    const duration = gameState.auto_reset_seconds || 10;
+    setResetCountdown(duration);
+
+    const interval = setInterval(() => {
+      setResetCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [winner, gameState.auto_reset_seconds]);
+
 
   // Celdas distribuidas en estructura 3x3 (top a bottom)
   const cellGrid = [
@@ -54,12 +97,45 @@ const GameBoard = ({ gameState, onReset, config, onSimulateTouch }) => {
         {winner ? (
           <div className={`game-status winner ${winner}`}>
             {winner === "draw" ? "¡Empate técnico!" : `¡Ganador: Jugador ${winner}!`}
+            {resetCountdown > 0 && (
+              <span className="auto-reset-countdown"> (Reiniciando en {resetCountdown}s)</span>
+            )}
           </div>
         ) : (
           <div className="game-status turn">
             Turno actual: <span className={`player-badge ${current_player}`}>{current_player}</span>
+            {gameState.game_mode === "pvcpu" && current_player === "O" && (
+              <span className="cpu-thinking-badge"> (CPU Pensando...)</span>
+            )}
           </div>
         )}
+      </div>
+
+      {gameState.time_limit_enabled && !winner && (
+        <div className="turn-timer-container">
+          <div className="turn-timer-header">
+            <span>Tiempo de Juego:</span>
+            <span><strong>{timeLeft}s</strong></span>
+          </div>
+          <div className="turn-timer-track">
+            <div 
+              className={`turn-timer-bar ${timeLeft <= 5 ? "warning" : ""}`}
+              style={{ width: `${timerProgress}%` }}
+            ></div>
+          </div>
+        </div>
+      )}
+
+      <div className="gameplay-rules-badges">
+        <span className="rule-badge">
+          {gameState.game_mode === "pvcpu" ? "🤖 vs CPU" : "👥 PVP"}
+        </span>
+        <span className="rule-badge">
+          {gameState.steal_enabled ? "⚔️ Robo Habilitado" : "🚫 Sin Robo"}
+        </span>
+        <span className="rule-badge">
+          {gameState.single_attempt_mode ? "🎯 Intento Único" : "🔄 Intentos Libres"}
+        </span>
       </div>
 
       <div className="gato-board">

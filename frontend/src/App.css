@@ -1431,3 +1431,138 @@ Gato LiDAR - Vistas y Elementos para Gameplay Screen (Tablero Único)
   vertical-align: middle;
 }
 
+/* Estilos para controles de Gameplay */
+.input-group select {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text-main);
+  font-family: 'Outfit', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: var(--transition-fast);
+  width: 100%;
+}
+
+.input-group select:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+}
+
+.checkbox-group {
+  margin-top: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  user-select: none;
+  font-size: 14px;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-cyan);
+  cursor: pointer;
+}
+
+.help-text {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.4;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.turn-timer-container {
+  width: 100%;
+  margin-top: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+}
+
+.turn-timer-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.turn-timer-track {
+  width: 100%;
+  height: 6px;
+  background: var(--bg-primary);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.turn-timer-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-cyan) 0%, #00bcff 100%);
+  box-shadow: 0 0 8px var(--accent-cyan-glow);
+  border-radius: 3px;
+  transition: width 0.1s linear;
+}
+
+.turn-timer-bar.warning {
+  background: linear-gradient(90deg, var(--accent-red) 0%, #ff1f1f 100%);
+  box-shadow: 0 0 8px var(--accent-red-glow);
+}
+
+.cpu-thinking-badge {
+  font-size: 12px;
+  color: var(--accent-cyan);
+  animation: pulse-glow 1s infinite alternate;
+  font-weight: normal;
+  margin-left: 5px;
+}
+
+.gameplay-rules-badges {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.rule-badge {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+}
+
+@keyframes pulse-glow {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+
+.auto-reset-countdown {
+  font-size: 0.85em;
+  opacity: 0.8;
+  font-weight: normal;
+  margin-left: 8px;
+  display: inline-block;
+  color: var(--text-muted);
+  animation: pulse-glow 1s infinite alternate;
+}
+

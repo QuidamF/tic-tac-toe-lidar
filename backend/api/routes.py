@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from config.runtime import runtime_config, update_runtime_config
-from lidar.lidar_service import trigger_mock_touch, game, use_mock, cancel_winning_animation
+from lidar.lidar_service import trigger_mock_touch, game, use_mock, cancel_winning_animation, reset_game_state_service
 from socketio_server.socket_service import emit_game_state
 from mqtt.mqtt_service import publish_game_state
 import services.bluetooth_audio as bt_audio
@@ -75,6 +75,13 @@ class ConfigUpdateRequest(BaseModel):
     gpio_bottom_center_o: int = None
     gpio_bottom_right_o: int = None
 
+    # Gameplay
+    game_mode: str = None
+    time_limit_enabled: bool = None
+    time_limit_seconds: int = None
+    single_attempt_mode: bool = None
+    steal_enabled: bool = None
+
 class MockTouchRequest(BaseModel):
     x: float
     y: float
@@ -90,11 +97,12 @@ def get_game_state():
     return {
         "board": game.board,
         "current_player": game.current_player,
-        "winner": game.winner
+        "winner": game.winner,
+        "winning_line": game.winning_line
     }
 
 @router.post("/config")
-def update_config(data: ConfigUpdateRequest):
+async def update_config(data: ConfigUpdateRequest):
     """Actualiza los parámetros en RAM y los persiste en SQLite."""
     # Filtrar solo campos no nulos enviados por el usuario
     update_data = {k: v for k, v in data.dict().items() if v is not None}
@@ -103,6 +111,21 @@ def update_config(data: ConfigUpdateRequest):
         raise HTTPException(status_code=400, detail="No se enviaron campos válidos para actualizar.")
         
     updated = update_runtime_config(update_data)
+    
+    # Si cambió la configuración del temporizador o modo, aplicar los cambios en caliente
+    if "time_limit_enabled" in update_data or "time_limit_seconds" in update_data:
+        from lidar.lidar_service import start_game_timer, game_timer_task, game_timer_start_time
+        if updated.get("time_limit_enabled", False):
+            if game_timer_start_time > 0.0:
+                start_game_timer()
+        else:
+            if game_timer_task and not game_timer_task.done():
+                game_timer_task.cancel()
+                
+    if "game_mode" in update_data:
+        from lidar.lidar_service import trigger_cpu_move_if_needed
+        trigger_cpu_move_if_needed()
+        
     return updated
 
 @router.post("/mock_touch")
@@ -114,10 +137,7 @@ def mock_touch(data: MockTouchRequest):
 @router.post("/reset")
 async def reset_game():
     """Reinicia la partida actual de Tic Tac Toe."""
-    # Cancelar la animación ganadora física de LEDs
-    cancel_winning_animation()
-    
-    game.reset()
+    reset_game_state_service()
     
     # Notificar reinicio al frontend via Websocket
     await emit_game_state({

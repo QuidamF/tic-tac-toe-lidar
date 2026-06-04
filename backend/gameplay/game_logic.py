@@ -47,23 +47,36 @@ class TicTacToeGame:
         self.winner = None  # X, O, draw, o None
         self.winning_line = None # list de 3 casillas o None
         
-    def make_move(self, cell_name: str):
+    def make_move(self, cell_name: str, config: dict = None):
         """Intenta colocar la ficha del jugador actual en la celda."""
         if self.winner or cell_name not in self.board:
             return False
             
-        # Dinámica de robo: sólo se puede tirar si la casilla está vacía o es del oponente.
-        # Si la casilla ya pertenece al propio jugador actual, no se permite el tiro.
-        if self.board[cell_name] == self.current_player:
-            return False
-            
-        self.board[cell_name] = self.current_player
-        self.check_winner()
+        # Leer parámetros de configuración (o usar valores por defecto)
+        steal_enabled = config.get("steal_enabled", True) if config else True
+        single_attempt = config.get("single_attempt_mode", False) if config else False
         
-        if not self.winner:
-            self.current_player = "O" if self.current_player == "X" else "X"
+        current_val = self.board[cell_name]
+        
+        # Validar movimiento
+        valid_move = False
+        if current_val == "":
+            valid_move = True
+        elif steal_enabled and current_val != self.current_player:
+            valid_move = True
             
-        return True
+        if valid_move:
+            self.board[cell_name] = self.current_player
+            self.check_winner()
+            
+            if not self.winner:
+                self.current_player = "O" if self.current_player == "X" else "X"
+            return True
+        else:
+            # Si el movimiento es inválido pero es modo de un solo intento, el turno cambia igual
+            if single_attempt:
+                self.current_player = "O" if self.current_player == "X" else "X"
+            return False
 
     def check_winner(self):
         b = self.board
