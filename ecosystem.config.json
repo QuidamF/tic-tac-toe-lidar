@@ -1,0 +1,21 @@
+{
+  "apps": [
+    {
+      "name": "gato-lidar-backend",
+      "script": "backend/app.py",
+      "cwd": "/home/edgar-ld/Documentos/Proyectos/GatoLidar",
+      "interpreter": "./venv/bin/python",
+      "watch": false,
+      "env": {
+        "PYTHONUNBUFFERED": "1",
+        "PORT": "8000"
+      },
+      "autorestart": true,
+      "max_restarts": 10,
+      "restart_delay": 5000,
+      "error_file": "logs/pm2-backend-err.log",
+      "out_file": "logs/pm2-backend-out.log",
+      "log_date_format": "YYYY-MM-DD HH:mm:ss"
+    }
+  ]
+}
