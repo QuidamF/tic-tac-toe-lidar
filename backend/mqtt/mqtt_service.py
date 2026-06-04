@@ -186,10 +186,42 @@ def publish_game_state(event_type: str, data: dict):
                             mqtt_client.publish("esp32/gpio", f"{pin}:off", qos=1)
                         except Exception:
                             pass
-                        # Apagar en formato JSON
                         try:
                             payload = {"cell": cell, "state": False, "gpio": pin, "type": suffix.strip("_")}
                             mqtt_client.publish("game/leds", json.dumps(payload), qos=1)
                         except Exception:
                             pass
             print("[MQTT] Apagados todos los LEDs físicos (toque, X, O) por reinicio de juego.")
+
+def publish_turn_leds(current_player: str, winner: str, config: dict):
+    """
+    Enciende el LED físico del turno correspondiente y apaga el otro.
+    Si hay ganador o empate, apaga ambos.
+    """
+    global mqtt_client, is_connected
+    if not mqtt_client or not is_connected:
+        return
+        
+    pin_x = config.get("gpio_turn_x", -1)
+    pin_o = config.get("gpio_turn_o", -1)
+    
+    # Publicar para X
+    if pin_x != -1:
+        action_x = "on" if (not winner and current_player == "X") else "off"
+        msg_x = f"{pin_x}:{action_x}"
+        try:
+            mqtt_client.publish("esp32/gpio", msg_x, qos=1)
+            print(f"[MQTT] Turno X -> esp32/gpio: {msg_x}")
+        except Exception as e:
+            print(f"[MQTT] Error al publicar turno X en esp32/gpio: {e}")
+            
+    # Publicar para O
+    if pin_o != -1:
+        action_o = "on" if (not winner and current_player == "O") else "off"
+        msg_o = f"{pin_o}:{action_o}"
+        try:
+            mqtt_client.publish("esp32/gpio", msg_o, qos=1)
+            print(f"[MQTT] Turno O -> esp32/gpio: {msg_o}")
+        except Exception as e:
+            print(f"[MQTT] Error al publicar turno O en esp32/gpio: {e}")
+

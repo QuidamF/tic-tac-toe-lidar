@@ -310,6 +310,32 @@ const ConfigPanel = ({ config, onConfigChange, onSave, onCalibrate, lidarConnect
                 ))}
               </tbody>
             </table>
+            
+            {/* Mapeos GPIO de Turno */}
+            <div className="gpio-turn-container" style={{ marginTop: '15px', display: 'flex', gap: '20px' }}>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.9rem', fontWeight: 500 }}>
+                  GPIO Turno X
+                </label>
+                <input
+                  type="number"
+                  value={config.gpio_turn_x !== undefined ? config.gpio_turn_x : -1}
+                  onChange={(e) => handleChange('gpio_turn_x', e.target.value)}
+                  style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px' }}
+                />
+              </div>
+              <div style={{ flex: 1 }}>
+                <label style={{ display: 'block', marginBottom: '5px', fontSize: '0.9rem', fontWeight: 500 }}>
+                  GPIO Turno O
+                </label>
+                <input
+                  type="number"
+                  value={config.gpio_turn_o !== undefined ? config.gpio_turn_o : -1}
+                  onChange={(e) => handleChange('gpio_turn_o', e.target.value)}
+                  style={{ width: '100%', padding: '8px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px' }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Acciones del Panel */}

@@ -79,7 +79,11 @@ DEFAULT_CONFIG = {
     "gpio_mid_right_o": -1,
     "gpio_bottom_left_o": -1,
     "gpio_bottom_center_o": -1,
-    "gpio_bottom_right_o": -1
+    "gpio_bottom_right_o": -1,
+
+    # Mapeos GPIO para indicar el turno correspondiente
+    "gpio_turn_x": -1,
+    "gpio_turn_o": -1
 }
 
 def cast_value(val_str: str):

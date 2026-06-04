@@ -150,6 +150,10 @@ async def reset_game():
     # Notificar al ESP32 a través de MQTT (apaga todos los LEDs físicos)
     publish_game_state("reset", {"status": "cleared"})
     
+    # E iniciar el LED de turno para el primer jugador
+    from lidar.lidar_service import publish_turn_leds
+    publish_turn_leds(game.current_player, game.winner, runtime_config)
+    
     return {"status": "ok", "message": "Juego de gato reiniciado."}
 
 @router.post("/calibrate")

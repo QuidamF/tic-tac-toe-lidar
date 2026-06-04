@@ -6,7 +6,7 @@ from spatial.transforms import polar_to_cartesian, transform_point, inside_board
 from lidar.clustering import get_valid_cluster
 from gameplay.game_logic import LidarDetectorStateMachine, TicTacToeGame
 from socketio_server.socket_service import emit_lidar_scan, emit_cluster, emit_gameplay, emit_game_state
-from mqtt.mqtt_service import publish_cell, publish_led, publish_game_state, publish_move_led, publish_clear_move_led
+from mqtt.mqtt_service import publish_cell, publish_led, publish_game_state, publish_move_led, publish_clear_move_led, publish_turn_leds
 from config.runtime import runtime_config
 
 # Estado global del juego de Tic Tac Toe
@@ -45,6 +45,9 @@ def reset_game_state_service():
     
     # Resetear tiempo de inicio del temporizador global (esperando primer toque)
     game_timer_start_time = 0.0
+    
+    # Actualizar los LEDs físicos del turno (inicializar con X encendido)
+    publish_turn_leds(game.current_player, game.winner, runtime_config)
     
     # Si le toca a la CPU de inicio
     if runtime_config.get("game_mode", "pvp") == "pvcpu" and game.current_player == "O":
@@ -102,6 +105,9 @@ async def run_game_timer(remaining):
             # Notificar ganador por MQTT
             publish_game_state("winner", {"winner": game.winner, "winning_line": game.winning_line})
             
+            # Apagar LEDs de turno
+            publish_turn_leds(game.current_player, game.winner, runtime_config)
+            
             # Iniciar animación física ganadora de LEDs si no es empate
             if game.winner != "draw":
                 global winning_animation_task
@@ -131,7 +137,14 @@ async def run_auto_reset():
         await asyncio.sleep(cooldown)
         print(f"[GAMEPLAY] Auto-reiniciando partida tras {cooldown} segundos de fin de juego.")
         reset_game_state_service()
-        # Emitir estado del juego reiniciado
+        
+        # Notificar al ESP32 por MQTT (apaga todos los LEDs físicos de celdas)
+        publish_game_state("reset", {"status": "cleared"})
+        
+        # E iniciar el LED de turno para el primer jugador
+        publish_turn_leds(game.current_player, game.winner, runtime_config)
+        
+        # Emitir estado del juego reiniciado al frontend
         await emit_game_state({
             "board": game.board,
             "current_player": game.current_player,
@@ -300,6 +313,10 @@ def handle_press(cell_name: str):
             publish_clear_move_led(cell_name, prev_occupant, runtime_config)
             
         publish_move_led(cell_name, player, runtime_config)
+
+    # Actualizar los LEDs físicos del turno correspondiente
+    if turn_changed or (game.winner != prev_winner):
+        publish_turn_leds(game.current_player, game.winner, runtime_config)
     
     if moved and game.winner != prev_winner:
         publish_game_state("winner", {"winner": game.winner, "winning_line": game.winning_line})
