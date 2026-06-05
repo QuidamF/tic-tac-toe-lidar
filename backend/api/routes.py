@@ -126,6 +126,10 @@ async def update_config(data: ConfigUpdateRequest):
         from lidar.lidar_service import trigger_cpu_move_if_needed
         trigger_cpu_move_if_needed()
         
+    if "mqtt_broker" in update_data or "mqtt_port" in update_data:
+        from mqtt.mqtt_service import reconnect_mqtt
+        reconnect_mqtt(updated)
+        
     return updated
 
 @router.post("/mock_touch")

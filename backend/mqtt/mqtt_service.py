@@ -225,3 +225,21 @@ def publish_turn_leds(current_player: str, winner: str, config: dict):
         except Exception as e:
             print(f"[MQTT] Error al publicar turno O en esp32/gpio: {e}")
 
+def reconnect_mqtt(config: dict):
+    """Detiene la conexión MQTT previa si existe, e inicia una nueva con la configuración actualizada."""
+    global mqtt_client, is_connected
+    print("[MQTT] Solicitando reconexión por cambio de configuración...")
+    
+    # Detener cliente previo si existe
+    if mqtt_client:
+        try:
+            mqtt_client.loop_stop()
+            mqtt_client.disconnect()
+            print("[MQTT] Cliente anterior detenido y desconectado.")
+        except Exception as e:
+            print(f"[MQTT] Error al desconectar cliente anterior: {e}")
+            
+    is_connected = False
+    connect_mqtt(config)
+
+
