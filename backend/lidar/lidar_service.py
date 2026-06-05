@@ -450,7 +450,14 @@ async def lidar_loop():
     # Intentar inicializar el LiDAR real si no está en modo forzado mock
     if not use_mock:
         try:
-            from rplidarc1 import RPLidar
+            import sys
+            import os
+            original_path = sys.path.copy()
+            sys.path = [p for p in sys.path if p not in ('', '.') and p != os.getcwd()]
+            try:
+                from rplidarc1 import RPLidar
+            finally:
+                sys.path = original_path
             port = runtime_config["lidar_port"]
             baud = runtime_config["lidar_baudrate"]
             print(f"[LiDAR] Inicializando hardware en puerto {port}...")
