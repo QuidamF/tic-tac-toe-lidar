@@ -6,6 +6,7 @@ runtime_config = {}
 # Configuración por defecto
 DEFAULT_CONFIG = {
     # LiDAR
+    "lidar_type": "lanhai",         # "rplidar" o "lanhai"
     "lidar_port": "/dev/ttyUSB0",
     "lidar_baudrate": 460800,
     "lidar_x": 1.5,                 # metros (centro horizontal del muro de 3m)

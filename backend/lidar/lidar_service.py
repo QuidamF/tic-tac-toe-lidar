@@ -458,30 +458,43 @@ async def lidar_loop():
                 from rplidarc1 import RPLidar
             finally:
                 sys.path = original_path
+            
             port = runtime_config["lidar_port"]
             baud = runtime_config["lidar_baudrate"]
-            print(f"[LiDAR] Inicializando hardware en puerto {port}...")
+            lidar_type = runtime_config.get("lidar_type", "rplidar")
+            print(f"[LiDAR] Inicializando hardware tipo {lidar_type} en puerto {port}...")
             
-            lidar_device = RPLidar(port=port, baudrate=baud)
-            
-            # Intentar reiniciar el hardware para asegurar un estado limpio en caso de interrupción previa
-            try:
-                print("[LiDAR] Enviando secuencia de reset para asegurar un estado limpio...")
-                lidar_device.reset()
-                print("[LiDAR] Esperando 0.3s adicionales para recibir mensajes de arranque...")
-                await asyncio.sleep(0.3)
-                print("[LiDAR] Limpiando el buffer serial post-reset...")
-                lidar_device._clear_input_buffer()
-            except Exception as reset_err:
-                print(f"[LiDAR] Advertencia durante el reset de hardware: {reset_err}")
+            if lidar_type == "lanhai":
+                from lidar.lanhai_lidar import LanhaiLidar
+                lidar_device = LanhaiLidar(port=port, baudrate=baud)
+                lidar_device.stop_event = asyncio.Event()
                 
-            lidar_device.stop_event = asyncio.Event()
-            
-            # Iniciar escaneo en el hardware
-            asyncio.create_task(lidar_device.simple_scan())
-            lidar_active = True
-            lidar = lidar_device
-            print("[LiDAR] Conectado e interactuando con hardware real.")
+                # Iniciar escaneo
+                asyncio.create_task(lidar_device.simple_scan())
+                lidar_active = True
+                lidar = lidar_device
+                print(f"[LiDAR] Conectado e interactuando con hardware Lanhai (LDS-50C-2A).")
+            else:
+                lidar_device = RPLidar(port=port, baudrate=baud)
+                
+                # Intentar reiniciar el hardware para asegurar un estado limpio en caso de interrupción previa
+                try:
+                    print("[LiDAR] Enviando secuencia de reset para asegurar un estado limpio...")
+                    lidar_device.reset()
+                    print("[LiDAR] Esperando 0.3s adicionales para recibir mensajes de arranque...")
+                    await asyncio.sleep(0.3)
+                    print("[LiDAR] Limpiando el buffer serial post-reset...")
+                    lidar_device._clear_input_buffer()
+                except Exception as reset_err:
+                    print(f"[LiDAR] Advertencia durante el reset de hardware: {reset_err}")
+                    
+                lidar_device.stop_event = asyncio.Event()
+                
+                # Iniciar escaneo en el hardware
+                asyncio.create_task(lidar_device.simple_scan())
+                lidar_active = True
+                lidar = lidar_device
+                print("[LiDAR] Conectado e interactuando con hardware real (RPLidar).")
         except Exception as e:
             import traceback
             print(f"[LiDAR] ERROR: No se pudo conectar al hardware real: {repr(e)}")
