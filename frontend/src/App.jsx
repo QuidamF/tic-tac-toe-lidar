@@ -4,6 +4,7 @@ import CalibrationCanvas from "./components/CalibrationCanvas";
 import ConfigPanel from "./components/ConfigPanel";
 import GameBoard from "./components/GameBoard";
 import GameplayBoardOnly from "./components/GameplayBoardOnly";
+import GameCatalog from "./components/GameCatalog";
 import "./App.css";
 
 // Determinar las URLs basadas en el host de acceso
@@ -30,6 +31,8 @@ function App() {
     winner: null,
     winning_line: null
   });
+
+  const [viewMode, setViewMode] = useState("dashboard"); // 'dashboard', 'catalog', 'gato_fullscreen'
 
   const prevGameStateRef = useRef(null);
 
@@ -112,7 +115,16 @@ function App() {
     };
   }, []);
 
-
+  // Escuchar mensajes desde el iframe del catálogo
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data && event.data.type === 'LAUNCH_GATO') {
+        setViewMode('gato_fullscreen');
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
   // 2.5 Actualizar configuración temporalmente via Socket.IO para tiempo real
   const handleConfigChange = (newConfig) => {
@@ -197,6 +209,47 @@ function App() {
     );
   }
 
+  if (viewMode === 'catalog') {
+    return (
+      <GameCatalog 
+        cluster={cluster} 
+        config={config} 
+        onBackToDashboard={() => setViewMode('dashboard')} 
+      />
+    );
+  }
+
+  if (viewMode === 'gato_fullscreen') {
+    return (
+      <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
+        <GameplayBoardOnly
+          gameState={gameState}
+          onReset={handleResetGame}
+          config={config}
+          onSimulateTouch={handleSimulateTouch}
+          socketStatus={socketStatus}
+        />
+        <button 
+          onClick={() => setViewMode('catalog')}
+          style={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            padding: '10px 20px',
+            background: 'rgba(0,0,0,0.6)',
+            color: '#00F0FF',
+            border: '1px solid #00F0FF',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            zIndex: 1000
+          }}
+        >
+          Volver al Catálogo
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       {/* Header */}
@@ -212,6 +265,22 @@ function App() {
               {socketStatus === "connected" ? "Conectado" : "Desconectado"}
             </span>
           </div>
+          <button 
+            className="btn-launch-catalog"
+            onClick={() => setViewMode('catalog')}
+            style={{
+              marginLeft: '20px',
+              padding: '8px 16px',
+              background: '#00F0FF',
+              color: '#000',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Abrir Catálogo Interactivo
+          </button>
         </div>
       </header>
 
