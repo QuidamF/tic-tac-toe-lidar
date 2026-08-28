@@ -29,12 +29,19 @@ def correct_centroid(raw_centroid: tuple, points: list, config: dict):
     if not raw_centroid:
         return raw_centroid
 
+    # Si la corrección de centroide por radio de pelota está desactivada (ej. en modo catálogo), devolver el centroide real
+    if not config.get("apply_centroid_correction", True):
+        return raw_centroid
+
     cx_raw, cy_raw = raw_centroid
 
     # 1. Obtener posición del LiDAR en coordenadas de muro y radio de la pelota
     lx = config.get("lidar_x", 1.5)
     ly = config.get("lidar_y", 3.0)
-    R = config.get("expected_cluster_radius", 0.10)
+    
+    # Usar radio de la pelota y toparlo a un máximo de 0.20m para evitar desplazamientos desmedidos
+    ball_radius = config.get("ball_radius", config.get("expected_cluster_radius", 0.10))
+    ball_radius = min(float(ball_radius), 0.20)
 
     # 2. Calcular vector visual desde el LiDAR al centroide crudo
     vx = cx_raw - lx
@@ -54,8 +61,8 @@ def correct_centroid(raw_centroid: tuple, points: list, config: dict):
     # Desplazamos el centroide a lo largo de la visual alejándolo del LiDAR.
     f = 0.75
 
-    corrected_cx = cx_raw + (f * R) * ux
-    corrected_cy = cy_raw + (f * R) * uy
+    corrected_cx = cx_raw + (f * ball_radius) * ux
+    corrected_cy = cy_raw + (f * ball_radius) * uy
 
     return (corrected_cx, corrected_cy)
 

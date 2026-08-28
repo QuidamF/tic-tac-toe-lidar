@@ -5,6 +5,8 @@ import ConfigPanel from "./components/ConfigPanel";
 import GameBoard from "./components/GameBoard";
 import GameplayBoardOnly from "./components/GameplayBoardOnly";
 import GameCatalog from "./components/GameCatalog";
+import GatoConfigPanel from "./components/GatoConfigPanel";
+import ProjectorView from "./components/ProjectorView";
 import "./App.css";
 
 // Determinar las URLs basadas en el host de acceso
@@ -32,7 +34,7 @@ function App() {
     winning_line: null
   });
 
-  const [viewMode, setViewMode] = useState("dashboard"); // 'dashboard', 'catalog', 'gato_fullscreen'
+  const [viewMode, setViewMode] = useState("dashboard"); // 'dashboard', 'catalog', 'gato_fullscreen', 'gato_config'
 
   const prevGameStateRef = useRef(null);
 
@@ -70,6 +72,8 @@ function App() {
     socket.on("connect", () => {
       setSocketStatus("connected");
       console.log("[Socket.IO] Conectado exitosamente.");
+      // Asegurarnos de sincronizar el modo actual al reconectar
+      socket.emit("set_active_mode", viewMode);
     });
 
     socket.on("disconnect", () => {
@@ -125,6 +129,13 @@ function App() {
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
   }, []);
+
+  // Sincronizar el modo de interacción activo con el backend
+  useEffect(() => {
+    if (socketRef.current && socketRef.current.connected) {
+      socketRef.current.emit("set_active_mode", viewMode);
+    }
+  }, [viewMode, socketStatus]);
 
   // 2.5 Actualizar configuración temporalmente via Socket.IO para tiempo real
   const handleConfigChange = (newConfig) => {
@@ -250,6 +261,35 @@ function App() {
     );
   }
 
+  // --- MODO PROYECTOR ---
+  if (window.location.pathname === "/projector") {
+    return (
+      <ProjectorView
+        config={config}
+        gameState={gameState}
+        cluster={cluster}
+        onReset={handleResetGame}
+        onSimulateTouch={handleSimulateTouch}
+        socketStatus={socketStatus}
+        socket={socketRef.current}
+      />
+    );
+  }
+
+  if (viewMode === 'gato_config') {
+    return (
+      <GatoConfigPanel 
+        config={config} 
+        onConfigChange={handleConfigChange} 
+        onSave={handleSaveConfig} 
+        onBack={() => setViewMode('dashboard')}
+        points={points}
+        cluster={cluster}
+        activeCell={activeCell}
+      />
+    );
+  }
+
   return (
     <div className="app-container">
       {/* Header */}
@@ -265,21 +305,75 @@ function App() {
               {socketStatus === "connected" ? "Conectado" : "Desconectado"}
             </span>
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)', padding: '5px', borderRadius: '8px', border: '1px solid #333' }}>
+            <span style={{ color: '#888', fontSize: '0.8rem', marginRight: '10px', marginLeft: '5px' }}>Proyector:</span>
+            <button 
+              className="btn-launch-catalog"
+              onClick={() => {
+                if (socketRef.current) socketRef.current.emit("launch_projector_app", "gato");
+              }}
+              style={{
+                padding: '6px 12px',
+                background: '#00F0FF',
+                color: '#000',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                marginRight: '5px'
+              }}
+              title="Manda el Gato a la computadora del proyector"
+            >
+              📺 Gato
+            </button>
+            <select 
+              onChange={(e) => {
+                if (e.target.value && socketRef.current) {
+                  socketRef.current.emit("launch_projector_app", e.target.value);
+                  e.target.value = ""; // Reset after send
+                }
+              }}
+              style={{
+                padding: '6px 12px',
+                background: '#D900FF',
+                color: '#FFF',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+              title="Selecciona una experiencia para lanzarla al proyector"
+            >
+              <option value="">🚀 Lanzar al Proyector...</option>
+              <option value="catalog">Catálogo Principal (Menú)</option>
+              <option disabled>──────────</option>
+              <option value="waves">Ondas Interactivas</option>
+              <option value="bloom">Particle Bloom</option>
+              <option value="nebula">Nebulosa Cósmica</option>
+              <option value="garden">Jardín Vivo Procedural</option>
+              <option value="sprites">Sprites Instanciados 3D</option>
+              <option value="birds">Bandada de Aves 3D</option>
+              <option value="linkedparticles">Partículas Vinculadas 3D</option>
+              <option value="ghosts">👻 Caza Fantasmas (Mansión Embrujada)</option>
+            </select>
+          </div>
+
           <button 
             className="btn-launch-catalog"
-            onClick={() => setViewMode('catalog')}
+            onClick={() => setViewMode('gato_config')}
             style={{
               marginLeft: '20px',
               padding: '8px 16px',
-              background: '#00F0FF',
-              color: '#000',
+              background: '#333',
+              color: '#FFF',
               border: 'none',
               borderRadius: '8px',
               fontWeight: 'bold',
               cursor: 'pointer'
             }}
           >
-            Abrir Catálogo Interactivo
+            ⚙️ Configurar Gato
           </button>
         </div>
       </header>
@@ -295,22 +389,17 @@ function App() {
           lidarConnected={lidarConnected}
         />
 
-        {/* Panel Central: Canvas de Calibración */}
-        <CalibrationCanvas
-          config={config}
-          points={points}
-          cluster={cluster}
-          activeCell={activeCell}
-          onConfigChange={setConfig}
-        />
-
-        {/* Panel Derecho: Gato de Juego */}
-        <GameBoard
-          gameState={gameState}
-          onReset={handleResetGame}
-          config={config}
-          onSimulateTouch={handleSimulateTouch}
-        />
+        {/* Panel Central/Derecho: Canvas de Calibración (ocupa el resto del espacio) */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <CalibrationCanvas
+            config={config}
+            points={points}
+            cluster={cluster}
+            activeCell={activeCell}
+            onConfigChange={setConfig}
+            showBoard={false}
+          />
+        </div>
       </main>
     </div>
   );

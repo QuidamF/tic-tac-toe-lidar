@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 
-const CalibrationCanvas = ({ config, points, cluster, activeCell, onConfigChange }) => {
+const CalibrationCanvas = ({ config, points, cluster, activeCell, onConfigChange, showBoard = false }) => {
   const canvasRef = useRef(null);
   const [dragState, setDragState] = useState({
     isDragging: false,
@@ -135,116 +135,118 @@ const CalibrationCanvas = ({ config, points, cluster, activeCell, onConfigChange
     ctx.lineTo(lPos.x + 12 * Math.cos(rotRad), lPos.y + 12 * Math.sin(rotRad));
     ctx.stroke();
 
-    // 3. Dibujar el Tablero (Gato)
-    const bx = config.board_x;
-    const by = config.board_y;
-    const bw = config.board_width;
-    const bh = config.board_height;
+    // 3. Dibujar el Tablero (Gato) si está habilitado
+    let bx = 0, by = 0, bw = 0, bh = 0, bTL, bBR;
+    if (showBoard) {
+      bx = config.board_x;
+      by = config.board_y;
+      bw = config.board_width;
+      bh = config.board_height;
+      bTL = toCanvasCoords(bx, by + bh, canvas, scale);
+      bBR = toCanvasCoords(bx + bw, by, canvas, scale);
+    }
 
-    const bTL = toCanvasCoords(bx, by + bh, canvas, scale);
-    const bBR = toCanvasCoords(bx + bw, by, canvas, scale);
-
-    // Resaltar la celda activa (interacción)
-    if (activeCell) {
-      ctx.fillStyle = "rgba(0, 255, 128, 0.15)";
-      
-      const grid = [
-        ["top_left", "top_center", "top_right"],
-        ["mid_left", "center", "mid_right"],
-        ["bottom_left", "bottom_center", "bottom_right"]
-      ];
-      
-
-      // Reemplazo del bucle para evitar bloqueos
-      let activeRow = -1, activeCol = -1;
-      for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 3; c++) {
-          if (grid[r][c] === activeCell) {
-            activeRow = r;
-            activeCol = c;
+    if (showBoard) {
+      // Resaltar la celda activa (interacción)
+      if (activeCell) {
+        ctx.fillStyle = "rgba(0, 255, 128, 0.15)";
+        
+        const grid = [
+          ["top_left", "top_center", "top_right"],
+          ["mid_left", "center", "mid_right"],
+          ["bottom_left", "bottom_center", "bottom_right"]
+        ];
+        
+        let activeRow = -1, activeCol = -1;
+        for (let r = 0; r < 3; r++) {
+          for (let c = 0; c < 3; c++) {
+            if (grid[r][c] === activeCell) {
+              activeRow = r;
+              activeCol = c;
+            }
           }
         }
+        if (activeRow !== -1 && activeCol !== -1) {
+          const cellW = bw / 3;
+          const cellH = bh / 3;
+          const cellX = bx + activeCol * cellW;
+          const cellY = by + (2 - activeRow) * cellH; // Y aumenta hacia arriba
+          
+          const c1 = toCanvasCoords(cellX, cellY + cellH, canvas, scale);
+          ctx.fillRect(c1.x, c1.y, (cellW * scale), (cellH * scale));
+        }
       }
-      if (activeRow !== -1 && activeCol !== -1) {
-        const cellW = bw / 3;
-        const cellH = bh / 3;
-        const cellX = bx + activeCol * cellW;
-        const cellY = by + (2 - activeRow) * cellH; // Y aumenta hacia arriba
-        
-        const c1 = toCanvasCoords(cellX, cellY + cellH, canvas, scale);
-        ctx.fillRect(c1.x, c1.y, (cellW * scale), (cellH * scale));
+
+      // Líneas externas del tablero
+      ctx.strokeStyle = activeCell ? "#00FF80" : "#00F0FF";
+      ctx.lineWidth = activeCell ? 3 : 2;
+      ctx.strokeRect(bTL.x, bTL.y, bw * scale, bh * scale);
+
+      // Líneas internas del tablero (cuadrícula 3x3)
+      ctx.strokeStyle = "rgba(0, 240, 255, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      
+      // Divisiones verticales
+      for (let i = 1; i < 3; i++) {
+        const xVal = bx + (bw / 3) * i;
+        const t1 = toCanvasCoords(xVal, by, canvas, scale);
+        const t2 = toCanvasCoords(xVal, by + bh, canvas, scale);
+        ctx.beginPath();
+        ctx.moveTo(t1.x, t1.y);
+        ctx.lineTo(t2.x, t2.y);
+        ctx.stroke();
       }
-    }
-
-    // Líneas externas del tablero
-    ctx.strokeStyle = activeCell ? "#00FF80" : "#00F0FF";
-    ctx.lineWidth = activeCell ? 3 : 2;
-    ctx.strokeRect(bTL.x, bTL.y, bw * scale, bh * scale);
-
-    // Líneas internas del tablero (cuadrícula 3x3)
-    ctx.strokeStyle = "rgba(0, 240, 255, 0.4)";
-    ctx.lineWidth = 1;
-    ctx.setLineDash([5, 5]);
-    
-    // Divisiones verticales
-    for (let i = 1; i < 3; i++) {
-      const xVal = bx + (bw / 3) * i;
-      const t1 = toCanvasCoords(xVal, by, canvas, scale);
-      const t2 = toCanvasCoords(xVal, by + bh, canvas, scale);
-      ctx.beginPath();
-      ctx.moveTo(t1.x, t1.y);
-      ctx.lineTo(t2.x, t2.y);
-      ctx.stroke();
-    }
-    // Divisiones horizontales
-    for (let j = 1; j < 3; j++) {
-      const yVal = by + (bh / 3) * j;
-      const t1 = toCanvasCoords(bx, yVal, canvas, scale);
-      const t2 = toCanvasCoords(bx + bw, yVal, canvas, scale);
-      ctx.beginPath();
-      ctx.moveTo(t1.x, t1.y);
-      ctx.lineTo(t2.x, t2.y);
-      ctx.stroke();
-    }
-    ctx.setLineDash([]); // Reset
-
-    // Dibujar textos descriptivos en cada celda
-    ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
-    ctx.font = "11px Outfit, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    const cellW = bw / 3;
-    const cellH = bh / 3;
-    const cellNames = [
-      ["1 (TL)", "2 (TC)", "3 (TR)"],
-      ["4 (ML)", "5 (C)",  "6 (MR)"],
-      ["7 (BL)", "8 (BC)", "9 (BR)"]
-    ];
-    for (let r = 0; r < 3; r++) {
-      for (let c = 0; c < 3; c++) {
-        const cx = bx + c * cellW + cellW / 2;
-        const cy = by + (2 - r) * cellH + cellH / 2;
-        const screenPos = toCanvasCoords(cx, cy, canvas, scale);
-        ctx.fillText(cellNames[r][c], screenPos.x, screenPos.y);
+      // Divisiones horizontales
+      for (let j = 1; j < 3; j++) {
+        const yVal = by + (bh / 3) * j;
+        const t1 = toCanvasCoords(bx, yVal, canvas, scale);
+        const t2 = toCanvasCoords(bx + bw, yVal, canvas, scale);
+        ctx.beginPath();
+        ctx.moveTo(t1.x, t1.y);
+        ctx.lineTo(t2.x, t2.y);
+        ctx.stroke();
       }
-    }
+      ctx.setLineDash([]); // Reset
 
-    // Dibujar manijas (Handles) en las esquinas para reescalar
-    ctx.fillStyle = "#00F0FF";
-    const corners = [
-      toCanvasCoords(bx, by + bh, canvas, scale), // TL
-      toCanvasCoords(bx + bw, by + bh, canvas, scale), // TR
-      toCanvasCoords(bx, by, canvas, scale), // BL
-      toCanvasCoords(bx + bw, by, canvas, scale), // BR
-    ];
-    corners.forEach((corner) => {
-      ctx.beginPath();
-      ctx.arc(corner.x, corner.y, 6, 0, 2 * Math.PI);
-      ctx.fill();
-      ctx.strokeStyle = "#FFFFFF";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-    });
+      // Dibujar textos descriptivos en cada celda
+      ctx.fillStyle = "rgba(255, 255, 255, 0.3)";
+      ctx.font = "11px Outfit, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const cellW = bw / 3;
+      const cellH = bh / 3;
+      const cellNames = [
+        ["1 (TL)", "2 (TC)", "3 (TR)"],
+        ["4 (ML)", "5 (C)",  "6 (MR)"],
+        ["7 (BL)", "8 (BC)", "9 (BR)"]
+      ];
+      for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+          const cx = bx + c * cellW + cellW / 2;
+          const cy = by + (2 - r) * cellH + cellH / 2;
+          const screenPos = toCanvasCoords(cx, cy, canvas, scale);
+          ctx.fillText(cellNames[r][c], screenPos.x, screenPos.y);
+        }
+      }
+
+      // Dibujar manijas (Handles) en las esquinas para reescalar
+      ctx.fillStyle = "#00F0FF";
+      const corners = [
+        toCanvasCoords(bx, by + bh, canvas, scale), // TL
+        toCanvasCoords(bx + bw, by + bh, canvas, scale), // TR
+        toCanvasCoords(bx, by, canvas, scale), // BL
+        toCanvasCoords(bx + bw, by, canvas, scale), // BR
+      ];
+      corners.forEach((corner) => {
+        ctx.beginPath();
+        ctx.arc(corner.x, corner.y, 6, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.strokeStyle = "#FFFFFF";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+    }
 
     // 4. Dibujar puntos de la cortina (LiDAR scan)
     if (points && points.length > 0) {
@@ -291,6 +293,7 @@ const CalibrationCanvas = ({ config, points, cluster, activeCell, onConfigChange
 
   // Manejador del evento Mouse Down
   const handleMouseDown = (e) => {
+    if (!showBoard) return; // Disable dragging if board is not shown
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
@@ -436,7 +439,7 @@ const CalibrationCanvas = ({ config, points, cluster, activeCell, onConfigChange
     <div className="canvas-container">
       <div className="canvas-header">
         <h3>Vista en Planta del Muro ({WALL_W.toFixed(1)}m x {WALL_H.toFixed(1)}m)</h3>
-        <p className="canvas-tip">Arrastra el interior del tablero para moverlo, o sus esquinas para redimensionarlo.</p>
+        {showBoard && <p className="canvas-tip">Arrastra el interior del tablero para moverlo, o sus esquinas para redimensionarlo.</p>}
       </div>
       <canvas
         ref={canvasRef}

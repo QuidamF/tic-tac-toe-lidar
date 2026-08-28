@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from config.runtime import runtime_config, update_runtime_config
 from lidar.lidar_service import trigger_mock_touch, game, use_mock, cancel_winning_animation, reset_game_state_service
 from socketio_server.socket_service import emit_game_state
-from mqtt.mqtt_service import publish_game_state
 import services.bluetooth_audio as bt_audio
 
 router = APIRouter(prefix="/api")
@@ -37,10 +36,6 @@ class ConfigUpdateRequest(BaseModel):
     expected_cluster_radius: float = None
     cluster_max_dist: float = None
     cooldown_ms: int = None
-    
-    # MQTT
-    mqtt_broker: str = None
-    mqtt_port: int = None
     
     # GPIOs (Active Touch/Interruption)
     gpio_top_left: int = None
@@ -126,10 +121,6 @@ async def update_config(data: ConfigUpdateRequest):
         from lidar.lidar_service import trigger_cpu_move_if_needed
         trigger_cpu_move_if_needed()
         
-    if "mqtt_broker" in update_data or "mqtt_port" in update_data:
-        from mqtt.mqtt_service import reconnect_mqtt
-        reconnect_mqtt(updated)
-        
     return updated
 
 @router.post("/mock_touch")
@@ -150,13 +141,6 @@ async def reset_game():
         "winner": game.winner,
         "winning_line": game.winning_line
     })
-    
-    # Notificar al ESP32 a través de MQTT (apaga todos los LEDs físicos)
-    publish_game_state("reset", {"status": "cleared"})
-    
-    # E iniciar el LED de turno para el primer jugador
-    from lidar.lidar_service import publish_turn_leds
-    publish_turn_leds(game.current_player, game.winner, runtime_config)
     
     return {"status": "ok", "message": "Juego de gato reiniciado."}
 

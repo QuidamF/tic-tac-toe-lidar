@@ -6,7 +6,6 @@ from spatial.transforms import polar_to_cartesian, transform_point, inside_board
 from lidar.clustering import get_valid_cluster
 from gameplay.game_logic import LidarDetectorStateMachine, TicTacToeGame
 from socketio_server.socket_service import emit_lidar_scan, emit_cluster, emit_gameplay, emit_game_state
-from mqtt.mqtt_service import publish_cell, publish_led, publish_game_state, publish_move_led, publish_clear_move_led, publish_turn_leds
 from config.runtime import runtime_config
 
 # Estado global del juego de Tic Tac Toe
@@ -27,6 +26,13 @@ game_timer_task = None
 auto_reset_task = None
 game_timer_start_time = 0.0
 
+# Modo activo desde el frontend (dashboard, catalog, gato_fullscreen)
+active_interaction_mode = "dashboard"
+
+def set_active_interaction_mode(mode: str):
+    global active_interaction_mode
+    active_interaction_mode = mode
+
 def reset_game_state_service():
     """Reinicia el estado del temporizador global, de la CPU y auto-reset al comenzar partida."""
     global winning_animation_task, cpu_task, game_timer_task, auto_reset_task, game_timer_start_time
@@ -45,9 +51,6 @@ def reset_game_state_service():
     
     # Resetear tiempo de inicio del temporizador global (esperando primer toque)
     game_timer_start_time = 0.0
-    
-    # Actualizar los LEDs físicos del turno (inicializar con X encendido)
-    publish_turn_leds(game.current_player, game.winner, runtime_config)
     
     # Si le toca a la CPU de inicio
     if runtime_config.get("game_mode", "pvp") == "pvcpu" and game.current_player == "O":
@@ -102,12 +105,6 @@ async def run_game_timer(remaining):
                 "winning_line": game.winning_line
             })
             
-            # Notificar ganador por MQTT
-            publish_game_state("winner", {"winner": game.winner, "winning_line": game.winning_line})
-            
-            # Apagar LEDs de turno
-            publish_turn_leds(game.current_player, game.winner, runtime_config)
-            
             # Iniciar animación física ganadora de LEDs si no es empate
             if game.winner != "draw":
                 global winning_animation_task
@@ -137,12 +134,6 @@ async def run_auto_reset():
         await asyncio.sleep(cooldown)
         print(f"[GAMEPLAY] Auto-reiniciando partida tras {cooldown} segundos de fin de juego.")
         reset_game_state_service()
-        
-        # Notificar al ESP32 por MQTT (apaga todos los LEDs físicos de celdas)
-        publish_game_state("reset", {"status": "cleared"})
-        
-        # E iniciar el LED de turno para el primer jugador
-        publish_turn_leds(game.current_player, game.winner, runtime_config)
         
         # Emitir estado del juego reiniciado al frontend
         await emit_game_state({
@@ -301,25 +292,7 @@ def handle_press(cell_name: str):
         "winning_line": game.winning_line
     }))
     
-    # 3. Emitir a MQTT para el ESP32
-    publish_cell(cell_name)
-    publish_led(cell_name, runtime_config, state=True)
-    
-    if moved:
-        player = game.board[cell_name]
-        # Si fue un robo de casilla, apagar el LED físico del oponente antes de encender el nuevo
-        if prev_occupant != "" and prev_occupant != player:
-            print(f"[GAMEPLAY] ¡ROBO! {player} le roba la casilla {cell_name} a {prev_occupant}")
-            publish_clear_move_led(cell_name, prev_occupant, runtime_config)
-            
-        publish_move_led(cell_name, player, runtime_config)
-
-    # Actualizar los LEDs físicos del turno correspondiente
-    if turn_changed or (game.winner != prev_winner):
-        publish_turn_leds(game.current_player, game.winner, runtime_config)
-    
     if moved and game.winner != prev_winner:
-        publish_game_state("winner", {"winner": game.winner, "winning_line": game.winning_line})
         # Cancelar temporizador global
         if game_timer_task and not game_timer_task.done():
             game_timer_task.cancel()
@@ -364,48 +337,7 @@ async def run_winning_animation(winner: str, winning_line: list, config: dict):
         if not winning_line:
             return
             
-        print(f"[ANIMATION] Iniciando secuencia ganadora para {winner} en la línea {winning_line}")
-        
-        # 1. Apagar todas las fichas (X y O) que NO están en la línea ganadora
-        for cell in cells:
-            if cell not in winning_line:
-                publish_clear_move_led(cell, "X", config)
-                publish_clear_move_led(cell, "O", config)
-        
-        # Mantener los ganadores encendidos durante 800ms
-        await asyncio.sleep(0.8)
-        
-        # 2. Parpadear la línea ganadora 3 veces
-        for _ in range(3):
-            # Apagar ganadores
-            for cell in winning_line:
-                publish_clear_move_led(cell, winner, config)
-            await asyncio.sleep(0.3)
-            
-            # Encender ganadores
-            for cell in winning_line:
-                publish_move_led(cell, winner, config)
-            await asyncio.sleep(0.3)
-            
-        await asyncio.sleep(0.4)
-        
-        # 3. Encender y apagar todas las casillas (X y O) 2 veces en secuencia festiva
-        for _ in range(2):
-            # Encender todas
-            for cell in cells:
-                publish_move_led(cell, "X", config)
-                publish_move_led(cell, "O", config)
-            await asyncio.sleep(0.5)
-            
-            # Apagar todas
-            for cell in cells:
-                publish_clear_move_led(cell, "X", config)
-                publish_clear_move_led(cell, "O", config)
-            await asyncio.sleep(0.5)
-            
-        # Al final, volver a encender solo la combinación ganadora para dejar el tablero en estado final
-        for cell in winning_line:
-            publish_move_led(cell, winner, config)
+        print(f"[ANIMATION] Secuencia ganadora omitida (no hay MQTT).")
             
     except asyncio.CancelledError:
         print("[ANIMATION] Animación ganadora cancelada por reinicio del juego.")
@@ -431,9 +363,8 @@ def handle_release(cell_name: str):
     """Callback ejecutado al terminar la interrupción y cooldown."""
     print(f"[GAMEPLAY] Fin de interacción en celda: {cell_name}")
     
-    # Emitir liberación en Socket.IO y apagar LED en MQTT
+    # Emitir liberación en Socket.IO
     asyncio.create_task(emit_gameplay(cell_name, "release"))
-    publish_led(cell_name, runtime_config, state=False)
 
 async def lidar_loop():
     """
@@ -566,6 +497,7 @@ async def lidar_loop():
             # Procesar el escaneo actual
             all_points = []
             unclamped_points = []
+            board_points = []
             
             # Procesar puntos del LiDAR real o ruido simulado
             for angle, dist_mm in raw_scan:
@@ -616,36 +548,78 @@ async def lidar_loop():
                     py_sat = max(0.0, min(py, runtime_config["wall_height"]))
                     all_points.append((px_sat, py_sat))
             
-            # Emitir escaneo COMPLETO del LiDAR al frontend (Socket.IO)
-            formatted_points = [{"x": p[0], "y": p[1]} for p in all_points]
-            await emit_lidar_scan(formatted_points)
+            # Emitir escaneo completo sólo cuando se visualiza el canvas de calibración (dashboard y gato_config)
+            # En modos interactivos (catalog, gato_fullscreen), omitir la emisión masiva de 400+ puntos para maximizar FPS y eliminar latencia
+            if active_interaction_mode in ("dashboard", "gato_config"):
+                formatted_points = [{"x": p[0], "y": p[1]} for p in all_points]
+                await emit_lidar_scan(formatted_points)
             
-            # Filtrar puntos que caen dentro del tablero para clustering (usando coordenadas sin saturar)
-            # excluyendo una pequeña franja de 6cm en el suelo (y < 0.06) y techo (y > H - 0.06)
-            board_points = []
-            for p in unclamped_points:
-                if inside_board(p[0], p[1], runtime_config):
-                    if 0.06 <= p[1] <= runtime_config["wall_height"] - 0.06:
-                        board_points.append(p)
-            
-            # Ejecutar agrupamiento (clustering) únicamente dentro del tablero
-            detected_cluster = get_valid_cluster(board_points, runtime_config)
-            
-            # Máquina de estados
-            if detected_cluster:
-                # Emitir cluster debug via Socket.IO
-                cluster_event_data = {
-                    "centroid": {
-                        "x": detected_cluster["centroid"][0],
-                        "y": detected_cluster["centroid"][1]
-                    },
-                    "points": detected_cluster["count"],
-                    "radius": detected_cluster["radius"]
-                }
-                await emit_cluster(cluster_event_data)
-                state_machine.update(cluster_event_data)
-            else:
-                await emit_cluster(None)
+            # Lógica de Interacción dependiendo del Modo Activo
+            if active_interaction_mode in ("gato_fullscreen", "dashboard", "gato_config"):
+                # Modo Gato o Dashboard: Filtrar puntos que caen dentro del tablero
+                for p in unclamped_points:
+                    if inside_board(p[0], p[1], runtime_config):
+                        if 0.06 <= p[1] <= runtime_config["wall_height"] - 0.06:
+                            board_points.append(p)
+                
+                detected_cluster = get_valid_cluster(board_points, runtime_config)
+                
+                if detected_cluster:
+                    cluster_event_data = {
+                        "centroid": {"x": detected_cluster["centroid"][0], "y": detected_cluster["centroid"][1]},
+                        "points": detected_cluster["count"],
+                        "radius": detected_cluster["radius"]
+                    }
+                    await emit_cluster(cluster_event_data)
+                    state_machine.update(cluster_event_data)
+                else:
+                    await emit_cluster(None)
+                    state_machine.update(None)
+                    
+            elif active_interaction_mode == "catalog":
+                # Modo Catálogo: Evaluar SÓLO dentro del área de proyección interactiva (tablero calibrado)
+                # Aplicar un margen de 4.0 cm dentro del tablero para evitar reflexiones en marcos y esquinas físicas.
+                wall_points = []
+                margin = 0.04
+                bx = runtime_config["board_x"]
+                by = runtime_config["board_y"]
+                bw = runtime_config["board_width"]
+                bh = runtime_config["board_height"]
+
+                for p in unclamped_points:
+                    if inside_board(p[0], p[1], runtime_config):
+                        if (bx + margin <= p[0] <= bx + bw - margin) and (by + margin <= p[1] <= by + bh - margin):
+                            wall_points.append(p)
+                
+                # Exigir un mínimo de 3 puntos por cluster en catálogo para evitar que ruidos de 2 puntos atasquen la esquina
+                catalog_config = runtime_config.copy()
+                catalog_config["cluster_min_points"] = max(3, int(runtime_config.get("cluster_min_points", 3)))
+                catalog_config["cluster_max_points"] = runtime_config.get("cluster_max_points", 9999)
+                catalog_config["expected_cluster_radius"] = 2.0 # Permitir grandes volúmenes (2 metros de radio)
+                catalog_config["apply_centroid_correction"] = False # No desplazar el centroide por radio de pelota en catálogo
+                
+                detected_cluster = get_valid_cluster(wall_points, catalog_config)
+                
+                # Descartar el cluster si su centroide cae demasiado cerca del límite extremo superior izquierdo
+                if detected_cluster:
+                    cx = detected_cluster["centroid"][0]
+                    cy = detected_cluster["centroid"][1]
+                    # Si el centroide está excesivamente cerca de los límites extremos del marco (esquina superior izquierda)
+                    if (cx <= bx + 0.02) or (cy >= by + bh - 0.02):
+                        detected_cluster = None
+
+                if detected_cluster:
+                    cluster_event_data = {
+                        "centroid": {"x": detected_cluster["centroid"][0], "y": detected_cluster["centroid"][1]},
+                        "points": detected_cluster["count"],
+                        "radius": detected_cluster["radius"]
+                    }
+                    print(f"[LiDAR] Cluster detectado en Catalog Mode: x={cluster_event_data['centroid']['x']:.2f}, y={cluster_event_data['centroid']['y']:.2f}")
+                    await emit_cluster(cluster_event_data)
+                else:
+                    await emit_cluster(None)
+                    
+                # Desactivar la máquina de estados del gato temporalmente para no jugar en el fondo
                 state_machine.update(None)
             
             # Imprimir estadísticas de depuración cada 2 segundos para monitorear el flujo de datos

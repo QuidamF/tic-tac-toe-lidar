@@ -1,43 +1,79 @@
 import React, { useRef, useEffect } from "react";
 
-const GameCatalog = ({ cluster, config, onBackToDashboard }) => {
+const GameCatalog = ({ cluster, config, onBackToDashboard, autoLaunch }) => {
   const iframeRef = useRef(null);
+  
+  const iframeSrc = autoLaunch ? `/catalogo/index.html?launch=${autoLaunch}` : "/catalogo/index.html";
   const lastTriggerTime = useRef(0);
   const lastTriggerPos = useRef({ x: 0, y: 0 });
 
+  const wasActive = useRef(false);
+
+  const [debugPos, setDebugPos] = React.useState(null);
+
+  const lastPx = useRef(0);
+  const lastPy = useRef(0);
+
   // Enviar eventos de LiDAR al iframe
   useEffect(() => {
-    if (cluster && cluster.centroid && config && iframeRef.current) {
-      const iframe = iframeRef.current;
-      const iframeWin = iframe.contentWindow;
+    const iframeWin = iframeRef.current?.contentWindow;
+    if (!iframeWin || !iframeWin.CatalogApp) return;
+
+    if (cluster && cluster.centroid && config) {
+      // Obtenemos dimensiones del iframe (que equivale a la pantalla del proyector)
+      const width = iframeRef.current.clientWidth || window.innerWidth;
+      const height = iframeRef.current.clientHeight || window.innerHeight;
+
+      // Mapeamos de coordenadas del tablero (metros) a píxeles de pantalla.
+      // Asumimos que el proyector ilumina exactamente el área definida por el tablero.
+      let px = ((cluster.centroid.x - config.board_x) / config.board_width) * width;
+      let py = height - (((cluster.centroid.y - config.board_y) / config.board_height) * height);
       
-      if (iframeWin && iframeWin.CatalogApp && iframeWin.CatalogApp.triggerInput) {
+      // Si cae en los extremos absolutos de la esquina superior izquierda (0,0), ignorar como fantasma de borde
+      if (px <= 10 && py <= 10) {
+        setDebugPos(null);
+        if (wasActive.current && iframeWin.CatalogApp.triggerEvent) {
+          wasActive.current = false;
+          iframeWin.CatalogApp.triggerEvent('pointerup', lastPx.current, lastPy.current);
+        }
+        return;
+      }
+
+      lastPx.current = px;
+      lastPy.current = py;
+      
+      console.log(`[React] LiDAR event: raw_x=${cluster.centroid.x.toFixed(2)}, raw_y=${cluster.centroid.y.toFixed(2)} -> mapped px=${px.toFixed(0)}, py=${py.toFixed(0)}`);
+      
+      setDebugPos({ x: px, y: py });
+
+      // Usar la nueva API de eventos continuos si está disponible
+      if (iframeWin.CatalogApp.triggerEvent) {
+        if (!wasActive.current) {
+          wasActive.current = true;
+          iframeWin.CatalogApp.triggerEvent('pointerdown', px, py);
+        } else {
+          // Ya hay un toque activo, es un arrastre
+          iframeWin.CatalogApp.triggerEvent('pointermove', px, py);
+        }
+      } else {
+        // Fallback a API antigua
         const now = Date.now();
-        
-        // Calcular la distancia euclidiana en metros desde el último toque
         const dist = Math.sqrt(
           Math.pow(cluster.centroid.x - lastTriggerPos.current.x, 2) + 
           Math.pow(cluster.centroid.y - lastTriggerPos.current.y, 2)
         );
-
-        // THROTTLING: Solo disparamos la interacción si han pasado más de 300ms 
-        // O si el toque se movió más de 15 centímetros (0.15m) respecto al anterior.
-        // Esto evita que las 60 tramas por segundo saturen la memoria y Web Audio API del navegador.
         if (now - lastTriggerTime.current > 300 || dist > 0.15) {
           lastTriggerTime.current = now;
           lastTriggerPos.current = { x: cluster.centroid.x, y: cluster.centroid.y };
-
-          // Obtenemos dimensiones del iframe
-          const width = iframe.clientWidth || window.innerWidth;
-          const height = iframe.clientHeight || window.innerHeight;
-
-          // Mapeamos de coordenadas del muro (metros) a píxeles de pantalla
-          let px = (cluster.centroid.x / config.wall_width) * width;
-          let py = height - ((cluster.centroid.y / config.wall_height) * height);
-
-          // Disparamos la entrada simulando un toque
           iframeWin.CatalogApp.triggerInput(px, py);
         }
+      }
+    } else {
+      setDebugPos(null);
+      // No hay cluster (se levantó el dedo/objeto)
+      if (wasActive.current && iframeWin.CatalogApp.triggerEvent) {
+        wasActive.current = false;
+        iframeWin.CatalogApp.triggerEvent('pointerup', lastPx.current, lastPy.current);
       }
     }
   }, [cluster, config]);
@@ -45,8 +81,9 @@ const GameCatalog = ({ cluster, config, onBackToDashboard }) => {
   return (
     <div className="game-catalog-wrapper" style={{ width: '100vw', height: '100vh', position: 'relative' }}>
       <iframe
+        key={autoLaunch || 'catalog'}
         ref={iframeRef}
-        src="/catalogo/index.html"
+        src={iframeSrc}
         title="Catálogo de Experiencias"
         style={{ width: '100%', height: '100%', border: 'none' }}
       />
@@ -68,6 +105,22 @@ const GameCatalog = ({ cluster, config, onBackToDashboard }) => {
       >
         Consola LiDAR
       </button>
+
+      {/* Indicador visual de depuración de toque */}
+      {debugPos && (
+        <div style={{
+          position: 'absolute',
+          left: debugPos.x - 10,
+          top: debugPos.y - 10,
+          width: '20px',
+          height: '20px',
+          backgroundColor: 'red',
+          borderRadius: '50%',
+          pointerEvents: 'none',
+          zIndex: 9999,
+          boxShadow: '0 0 10px red'
+        }} />
+      )}
     </div>
   );
 };

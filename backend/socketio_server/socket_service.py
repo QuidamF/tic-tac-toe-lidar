@@ -37,6 +37,38 @@ async def update_config_temp(sid, data):
         if key in runtime_config:
             runtime_config[key] = cast_value(str(val))
 
+@sio.event
+async def set_active_mode(sid, mode):
+    """
+    Cambia el modo activo de interacción para que el LiDAR filtre de manera acorde
+    (ej: 'dashboard', 'catalog', 'gato_fullscreen').
+    """
+    try:
+        from lidar.lidar_service import set_active_interaction_mode
+        set_active_interaction_mode(mode)
+        print(f"[Socket.IO] Modo de interacción cambiado a: {mode}")
+    except Exception as e:
+        print(f"[Socket.IO] Error al cambiar el modo activo: {e}")
+
+@sio.event
+async def launch_projector_app(sid, app_name):
+    """
+    Control remoto para la vista del proyector.
+    Cambia el modo de interacción del lidar y emite a la vista esclava
+    qué aplicación debe mostrar.
+    """
+    print(f"[Socket.IO] Comando de proyector recibido: lanzar {app_name}")
+    try:
+        from lidar.lidar_service import set_active_interaction_mode
+        if app_name == "gato":
+            set_active_interaction_mode("gato_fullscreen")
+        elif app_name in ["catalog", "waves", "bloom", "nebula", "garden", "sprites", "birds", "linkedparticles", "ghosts"]:
+            set_active_interaction_mode("catalog")
+    except Exception as e:
+        print(f"[Socket.IO] Error al cambiar el modo activo para el proyector: {e}")
+        
+    await sio.emit('set_projector_app', app_name)
+
 async def emit_lidar_scan(points: list):
     """
     Emite el escaneo procesado y filtrado actual en tiempo real.

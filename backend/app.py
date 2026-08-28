@@ -15,7 +15,6 @@ sys.path.append(CURRENT_DIR)
 from api.routes import router
 from socketio_server.socket_service import sio
 from config.runtime import load_config_from_db, runtime_config
-from mqtt.mqtt_service import connect_mqtt
 from lidar.lidar_service import lidar_loop
 
 app = FastAPI(title="Gato Lidar Server", version="2.0.0")
@@ -57,11 +56,23 @@ def read_board():
         return FileResponse(index_path)
     return {"status": "ok", "message": "Gato Lidar Server Online"}
 
+@app.get("/projector")
+def read_projector():
+    """Sirve la interfaz de usuario para la vista esclava (proyector)."""
+    index_path = os.path.join(STATIC_DIR, "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"status": "ok", "message": "Gato Lidar Server Online"}
+
 # Montar los assets estáticos (JS, CSS, Imágenes)
 assets_dir = os.path.join(STATIC_DIR, "assets")
 if not os.path.exists(assets_dir):
     os.makedirs(assets_dir)
 app.mount("/assets", StaticFiles(directory=assets_dir), name="static")
+
+# Montar la carpeta del catálogo
+catalogo_dir = os.path.join(STATIC_DIR, "catalogo")
+app.mount("/catalogo", StaticFiles(directory=catalogo_dir, html=True), name="catalogo")
 
 # Combinar FastAPI y Socket.IO en una sola aplicación ASGI
 socket_app = socketio.ASGIApp(
@@ -75,9 +86,6 @@ async def startup_event():
     
     # 1. Cargar configuración de SQLite a RAM
     config = load_config_from_db()
-    
-    # 2. Inicializar conexión MQTT (de fondo)
-    connect_mqtt(config)
     
     # 3. Lanzar el bucle principal de adquisición y procesamiento del LiDAR
     asyncio.create_task(lidar_loop())
