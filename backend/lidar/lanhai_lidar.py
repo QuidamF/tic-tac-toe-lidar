@@ -37,16 +37,18 @@ class LanhaiLidar:
 
     async def _read_stream(self):
         """Lee el stdout del proceso en una tarea."""
-        try:
-            while not self.stop_event.is_set():
+        ldp_count = 0
+        while not self.stop_event.is_set():
+            try:
                 line = await self.process.stdout.readline()
                 if not line:
+                    print("[LANHAI] EOF recibido en stdout de uart-demo")
                     break
-                line = line.decode('utf-8').strip()
+                line_str = line.decode('utf-8', errors='replace').strip()
                 
                 # Nuestra modificación en user.cpp imprime: LDP <angle_rad> <dist_m> <confidence>
-                if line.startswith("LDP"):
-                    parts = line.split(" ")
+                if line_str.startswith("LDP"):
+                    parts = line_str.split(" ")
                     if len(parts) >= 4:
                         try:
                             angle_rad = float(parts[1])
@@ -63,13 +65,20 @@ class LanhaiLidar:
                             }
                             # Enviar al queue con el mismo formato que rplidarc1
                             self.output_queue.put_nowait(point)
+                            ldp_count += 1
+                            if ldp_count % 100 == 0:
+                                print(f"[LANHAI-Debug] {ldp_count} puntos LDP leídos y puestos en queue.")
                             
-                        except ValueError:
-                            pass
-        except asyncio.CancelledError:
-            pass
-        except Exception as e:
-            print(f"[LANHAI] Error leyendo stream: {e}")
+                        except ValueError as ve:
+                            print(f"[LANHAI] Error parseando LDP: {ve}")
+                else:
+                    if line_str:
+                        print(f"[LANHAI-Stdout] {line_str}")
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                print(f"[LANHAI] Error leyendo línea de stream: {e}")
+                await asyncio.sleep(0.01)
 
     async def simple_scan(self):
         """

@@ -8,6 +8,22 @@ from gameplay.game_logic import LidarDetectorStateMachine, TicTacToeGame
 from socketio_server.socket_service import emit_lidar_scan, emit_cluster, emit_gameplay, emit_game_state
 from config.runtime import runtime_config
 
+def safe_float(val, default=0.0):
+    try:
+        if val == "" or val is None:
+            return default
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+def safe_int(val, default=0):
+    try:
+        if val == "" or val is None:
+            return default
+        return int(float(val))
+    except (ValueError, TypeError):
+        return default
+
 # Estado global del juego de Tic Tac Toe
 game = TicTacToeGame()
 
@@ -469,22 +485,28 @@ async def lidar_loop():
                     except Exception:
                         break
                 
-                # Actualizar el buffer permanente de barrido
+                now = time.time()
+                # Actualizar el buffer permanente de barrido guardando la estampa de tiempo
                 for pt in points_to_process:
                     angle_key = round(pt['a_deg'], 1)
                     if pt['d_mm'] is not None and pt['d_mm'] > 0:
-                        scan_buffer[angle_key] = pt['d_mm']
+                        scan_buffer[angle_key] = (pt['d_mm'], now)
                     else:
                         # Si es 0 o None, removemos la lectura para no generar puntos fantasmas
                         scan_buffer.pop(angle_key, None)
                 
+                # Expirar lecturas antiguas no actualizadas en los últimos 0.3 segundos (fantasmas)
+                max_age = 0.3
+                stale_keys = [k for k, (dist, ts) in scan_buffer.items() if now - ts > max_age]
+                for k in stale_keys:
+                    del scan_buffer[k]
+                
                 # Controlar la tasa de emisión (throttle a ~15Hz para estabilidad y rendimiento de Socket.IO)
-                now = time.time()
                 if now - last_emit_time >= 0.066:
                     should_process = True
                     last_emit_time = now
                     # Extraer el escaneo completo actual a partir de la memoria de barrido
-                    raw_scan = [(angle, dist) for angle, dist in scan_buffer.items()]
+                    raw_scan = [(angle, dist_ts[0]) for angle, dist_ts in scan_buffer.items()]
                 else:
                     should_process = False
                     # Dar un pequeño respiro para evitar saturación de CPU
@@ -499,12 +521,19 @@ async def lidar_loop():
             unclamped_points = []
             board_points = []
             
+            obs_min_val = safe_float(runtime_config.get("observation_angle_min"), -70.0)
+            obs_max_val = safe_float(runtime_config.get("observation_angle_max"), 70.0)
+            min_norm = obs_min_val % 360
+            max_norm = obs_max_val % 360
+            
+            wall_w = safe_float(runtime_config.get("wall_width"), 3.0)
+            wall_h = safe_float(runtime_config.get("wall_height"), 3.0)
+            cluster_min_pts = safe_int(runtime_config.get("cluster_min_points"), 3)
+            
             # Procesar puntos del LiDAR real o ruido simulado
             for angle, dist_mm in raw_scan:
                 # Normalizar ángulos a [0, 360] para soportar cualquier rango (incluso negativos o cruces por 0)
                 angle_norm = angle % 360
-                min_norm = runtime_config["observation_angle_min"] % 360
-                max_norm = runtime_config["observation_angle_max"] % 360
                 
                 is_inside = False
                 if min_norm <= max_norm:
@@ -525,27 +554,27 @@ async def lidar_loop():
                 x_wall, y_wall = transform_point(x_lidar, y_lidar, runtime_config)
                 
                 # Guardar los puntos con un margen amplio para ver la alineación y rotación en el canvas
-                if -1.5 <= x_wall <= runtime_config["wall_width"] + 1.5 and -1.0 <= y_wall <= runtime_config["wall_height"] + 1.5:
+                if -1.5 <= x_wall <= wall_w + 1.5 and -1.0 <= y_wall <= wall_h + 1.5:
                     # Guardar coordenadas reales sin saturar para clustering
                     unclamped_points.append((x_wall, y_wall))
                     
                     # Guardar coordenadas saturadas/limitadas al muro para visualización
-                    x_wall_sat = max(0.0, min(x_wall, runtime_config["wall_width"]))
-                    y_wall_sat = max(0.0, min(y_wall, runtime_config["wall_height"]))
+                    x_wall_sat = max(0.0, min(x_wall, wall_w))
+                    y_wall_sat = max(0.0, min(y_wall, wall_h))
                     all_points.append((x_wall_sat, y_wall_sat))
             
             # Inyectar directamente el cluster mock si está activo
             if mock_touch_point is not None:
                 tx, ty = mock_touch_point
                 # Generar cluster denso de prueba
-                for _ in range(runtime_config["cluster_min_points"] + 5):
+                for _ in range(cluster_min_pts + 5):
                     px = tx + random.uniform(-0.04, 0.04)
                     py = ty + random.uniform(-0.04, 0.04)
                     unclamped_points.append((px, py))
                     
                     # Limitar al muro
-                    px_sat = max(0.0, min(px, runtime_config["wall_width"]))
-                    py_sat = max(0.0, min(py, runtime_config["wall_height"]))
+                    px_sat = max(0.0, min(px, wall_w))
+                    py_sat = max(0.0, min(py, wall_h))
                     all_points.append((px_sat, py_sat))
             
             # Emitir escaneo completo sólo cuando se visualiza el canvas de calibración (dashboard y gato_config)

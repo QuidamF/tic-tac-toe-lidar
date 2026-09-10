@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -17,7 +18,32 @@ from socketio_server.socket_service import sio
 from config.runtime import load_config_from_db, runtime_config
 from lidar.lidar_service import lidar_loop
 
-app = FastAPI(title="Gato Lidar Server", version="2.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("[SERVER] Arrancando servicios del backend...")
+    
+    # 1. Cargar configuración de SQLite a RAM
+    config = load_config_from_db()
+    
+    # 3. Lanzar el bucle principal de adquisición y procesamiento del LiDAR
+    asyncio.create_task(lidar_loop())
+    
+    # 4. Restablecer la salida de audio predeterminada si está configurada
+    default_sink = config.get("default_audio_sink", "")
+    if default_sink:
+        print(f"[AUDIO] Restableciendo salida de audio predeterminada: {default_sink}")
+        from services.bluetooth_audio import set_default_sink
+        asyncio.create_task(set_default_sink(default_sink))
+        
+    print("[SERVER] Tareas de segundo plano iniciadas correctamente.")
+    
+    yield
+    
+    print("[SERVER] Apagando servicios del backend...")
+    from lidar.lidar_service import shutdown_lidar
+    shutdown_lidar()
+
+app = FastAPI(title="Gato Lidar Server", version="2.0.0", lifespan=lifespan)
 
 # Permitir CORS desde cualquier origen para testing local
 app.add_middleware(
@@ -79,31 +105,6 @@ socket_app = socketio.ASGIApp(
     sio,
     other_asgi_app=app
 )
-
-@app.on_event('startup')
-async def startup_event():
-    print("[SERVER] Arrancando servicios del backend...")
-    
-    # 1. Cargar configuración de SQLite a RAM
-    config = load_config_from_db()
-    
-    # 3. Lanzar el bucle principal de adquisición y procesamiento del LiDAR
-    asyncio.create_task(lidar_loop())
-    
-    # 4. Restablecer la salida de audio predeterminada si está configurada
-    default_sink = config.get("default_audio_sink", "")
-    if default_sink:
-        print(f"[AUDIO] Restableciendo salida de audio predeterminada: {default_sink}")
-        from services.bluetooth_audio import set_default_sink
-        asyncio.create_task(set_default_sink(default_sink))
-        
-    print("[SERVER] Tareas de segundo plano iniciadas correctamente.")
-
-@app.on_event('shutdown')
-def shutdown_event():
-    print("[SERVER] Apagando servicios del backend...")
-    from lidar.lidar_service import shutdown_lidar
-    shutdown_lidar()
 
 if __name__ == '__main__':
     # Arrancar servidor ASGI local en el puerto 8000

@@ -36,12 +36,13 @@ def correct_centroid(raw_centroid: tuple, points: list, config: dict):
     cx_raw, cy_raw = raw_centroid
 
     # 1. Obtener posición del LiDAR en coordenadas de muro y radio de la pelota
-    lx = config.get("lidar_x", 1.5)
-    ly = config.get("lidar_y", 3.0)
+    lx = safe_float(config.get("lidar_x"), 1.5)
+    ly = safe_float(config.get("lidar_y"), 3.0)
     
     # Usar radio de la pelota y toparlo a un máximo de 0.20m para evitar desplazamientos desmedidos
-    ball_radius = config.get("ball_radius", config.get("expected_cluster_radius", 0.10))
-    ball_radius = min(float(ball_radius), 0.20)
+    raw_radius = config.get("ball_radius") if config.get("ball_radius") is not None else config.get("expected_cluster_radius", 0.10)
+    ball_radius = safe_float(raw_radius, 0.10)
+    ball_radius = min(ball_radius, 0.20)
 
     # 2. Calcular vector visual desde el LiDAR al centroide crudo
     vx = cx_raw - lx
@@ -106,6 +107,22 @@ def find_clusters(points: list, max_dist: float):
         
     return clusters
 
+def safe_float(val, default=0.0):
+    try:
+        if val == "" or val is None:
+            return default
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+def safe_int(val, default=0):
+    try:
+        if val == "" or val is None:
+            return default
+        return int(float(val))
+    except (ValueError, TypeError):
+        return default
+
 def get_valid_cluster(points: list, config: dict):
     """
     Agrupa los puntos y devuelve el mejor cluster que cumpla con las restricciones
@@ -114,18 +131,23 @@ def get_valid_cluster(points: list, config: dict):
     if not points:
         return None
         
-    clusters = find_clusters(points, config["cluster_max_dist"])
+    cluster_max_dist = safe_float(config.get("cluster_max_dist"), 0.15)
+    cluster_min_pts = safe_int(config.get("cluster_min_points"), 3)
+    cluster_max_pts = safe_int(config.get("cluster_max_points"), 80)
+    expected_radius = safe_float(config.get("expected_cluster_radius"), 0.12)
+        
+    clusters = find_clusters(points, cluster_max_dist)
     
     valid_clusters = []
     for c in clusters:
         n_pts = len(c)
-        if config["cluster_min_points"] <= n_pts <= config["cluster_max_points"]:
+        if cluster_min_pts <= n_pts <= cluster_max_pts:
             centroid = calculate_centroid(c)
             radius = calculate_radius(c, centroid)
             
             # Validación opcional de radio
-            # La pelota de fútbol tiene un radio definido, aceptamos hasta un 150% de tolerancia
-            max_allowed_radius = config["expected_cluster_radius"] * 1.8
+            # La pelota de fútbol tiene un radio definido, aceptamos hasta un 180% de tolerancia
+            max_allowed_radius = expected_radius * 1.8
             if radius <= max_allowed_radius:
                 # Aplicar la compensación de centroide por proyección del LiDAR
                 corrected = correct_centroid(centroid, c, config)
