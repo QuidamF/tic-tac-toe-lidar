@@ -149,3 +149,63 @@ El módulo de juego de Gato permite tanto partidas recreativas simples como torn
 | **El balón no registra toque** | El parámetro de `Puntos Mínimos` es demasiado alto. | Reduzca `Puntos Mínimos` a 2 o 3 y aumente ligeramente `cluster_max_dist`. |
 | **Doble toque inmediato al lanzar** | Cooldown antirrebote muy bajo. | Incremente el tiempo de `Cooldown Antirrebote` a 600 ms o superior. |
 | **Sin sonido en las experiencias** | El navegador bloqueó el autoplay o el dispositivo de audio está apagado. | Haga clic en cualquier parte de la pantalla para activar el contexto de Web Audio y revise la pestaña de Audio en la consola. |
+
+---
+
+## 7. Guía para Desarrolladores: Integración de Nuevos Juegos
+
+Cualquier aplicación externa (HTML5 Canvas, Three.js, Unity, Unreal Engine, Godot, TouchDesigner) puede conectarse al servidor mediante **Socket.IO** en `http://<IP_HOST>:8000` para recibir eventos de interacción espacial en tiempo real.
+
+### 7.1. Eventos y Estructura de Datos (Payloads)
+
+#### A. Evento `lidar_cluster` (Detección de Impacto de Balón u Objeto)
+Es el canal principal para minijuegos interactivos. Emite las coordenadas del centroide de impacto ya calibradas en metros respecto a la esquina inferior izquierda del muro:
+
+```json
+{
+  "centroid": [1.452, 1.208],
+  "points": 8,
+  "radius": 0.095
+}
+```
+
+* **`centroid`**: `[x, y]` en **metros**.
+  * `x`: Posición horizontal (de `0.0` a `wall_width`).
+  * `y`: Posición vertical (de `0.0` a `wall_height`).
+* **`points`**: Cantidad de haces láser reflejados por el objeto.
+* **`radius`**: Radio estimado del impacto en metros.
+* **`null`**: Se envía cuando el objeto se retira o se extingue el contacto.
+
+#### B. Evento `lidar_scan` (Nube de Puntos Completa en Muro)
+Emisión a ~15 Hz de todos los puntos dentro del área de observación para visualización o efectos continuos de partículas:
+
+```json
+{
+  "points": [
+    { "x": 1.25, "y": 0.85 },
+    { "x": 1.28, "y": 0.89 }
+  ]
+}
+```
+
+#### C. Evento `gameplay_event` (Pulsación de Casillas)
+```json
+{
+  "cell": "top_left",
+  "event": "press"
+}
+```
+* `cell`: Nombre de la casilla (`top_left`, `center`, `bottom_right`, etc.).
+* `event`: `"press"` o `"release"`.
+
+### 7.2. Conversión a Píxeles de Pantalla (Canvas / Web)
+```javascript
+// Coordenadas normalizadas [0.0 - 1.0]
+const normX = cluster.centroid[0] / config.wall_width;
+const normY = 1.0 - (cluster.centroid[1] / config.wall_height); // Invertir si Y crece hacia abajo
+
+// Mapeo a resolución de pantalla
+const screenX = normX * window.innerWidth;
+const screenY = normY * window.innerHeight;
+```
+

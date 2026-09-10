@@ -299,5 +299,44 @@ pm2 restart gato-lidar-backend     # Reiniciar servicio</code></pre>
         </tbody>
     </table>
 
+    <hr>
+
+    <h2>7. Guía para Desarrolladores: Integración de Nuevos Juegos</h2>
+    <p>Cualquier motor o interfaz externa (<strong>Web / Canvas, Three.js, Unity, Unreal Engine, Godot, TouchDesigner</strong>) puede conectarse al servidor mediante <strong>Socket.IO</strong> en <code>http://&lt;IP_HOST&gt;:8000</code> para recibir eventos espaciales calibrados.</p>
+
+    <h3>7.1. Eventos y Estructura de Datos (Payloads)</h3>
+
+    <h4>A. Evento <code>lidar_cluster</code> (Detección de Impactos de Balón u Objeto)</h4>
+    <p>Es el evento primordial para videojuegos interactivos. Emite las coordenadas del centroide de impacto ya convertidas a metros respecto al origen inferior izquierdo del muro:</p>
+    <pre><code>{
+  "centroid": [1.452, 1.208],
+  "points": 8,
+  "radius": 0.095
+}</code></pre>
+    <ul>
+        <li><code>centroid</code>: Array <code>[x, y]</code> en <strong>metros</strong> respecto al muro.</li>
+        <li><code>points</code>: Cantidad de reflexiones láser que conforman el impacto.</li>
+        <li><code>radius</code>: Radio estimado del balón/objeto en metros.</li>
+        <li><code>null</code>: Se emite cuando cesa el contacto sobre el muro.</li>
+    </ul>
+
+    <h4>B. Evento <code>lidar_scan</code> (Nube de Puntos Completa en Muro)</h4>
+    <p>Emisión continua a ~15 Hz de los puntos válidos sobre el muro:</p>
+    <pre><code>{
+  "points": [
+    { "x": 1.25, "y": 0.85 },
+    { "x": 1.28, "y": 0.89 }
+  ]
+}</code></pre>
+
+    <h3>7.2. Normalización de Coordenadas para Pantallas y Videojuegos</h3>
+    <pre><code>// Normalizar coordenadas a rango [0.0 - 1.0]
+const normX = cluster.centroid[0] / config.wall_width;
+const normY = 1.0 - (cluster.centroid[1] / config.wall_height); // Invertir si el Canvas Y crece hacia abajo
+
+// Mapeo a píxeles de pantalla
+const pixelX = normX * window.innerWidth;
+const pixelY = normY * window.innerHeight;</code></pre>
+
 </body>
 </html>
