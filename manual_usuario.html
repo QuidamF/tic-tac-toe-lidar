@@ -1,314 +1,303 @@
 <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <title>Gato LiDAR</title>
-        <style>
-            
-    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
-    
-    @page {
-        size: letter;
-        margin: 20mm 20mm 20mm 20mm;
-        @bottom-right {
-            content: counter(page);
-        }
-    }
-    
-    body {
-        font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        color: #1e293b;
-        line-height: 1.6;
-        font-size: 11pt;
-        background-color: #ffffff;
-    }
-    
-    h1, h2, h3, h4 {
-        color: #0f172a;
-        font-weight: 700;
-        page-break-after: avoid;
-    }
-    
-    h1 {
-        font-size: 24pt;
-        border-bottom: 3px solid #06b6d4;
-        padding-bottom: 12px;
-        margin-top: 0;
-        margin-bottom: 25px;
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-    }
-    
-    h2 {
-        font-size: 15pt;
-        border-bottom: 1.5px solid #cbd5e1;
-        padding-bottom: 6px;
-        margin-top: 35px;
-        margin-bottom: 15px;
-        color: #0369a1;
-    }
-    
-    h3 {
-        font-size: 12pt;
-        margin-top: 25px;
-        margin-bottom: 10px;
-        color: #0f172a;
-    }
-    
-    p {
-        margin-top: 0;
-        margin-bottom: 15px;
-        text-align: justify;
-    }
-    
-    ul, ol {
-        margin-top: 0;
-        margin-bottom: 15px;
-        padding-left: 20px;
-    }
-    
-    li {
-        margin-bottom: 6px;
-    }
-    
-    img {
-        display: block;
-        max-width: 50%;
-        max-height: 3.5in;
-        height: auto;
-        border-radius: 8px;
-        margin: 15px auto;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
-        border: 1px solid #e2e8f0;
-        page-break-inside: avoid;
-    }
-    
-    code {
-        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-        background-color: #f1f5f9;
-        color: #0f172a;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 9.5pt;
-    }
-    
-    pre {
-        background-color: #0f172a;
-        color: #f8fafc;
-        padding: 15px;
-        border-radius: 8px;
-        overflow-x: auto;
-        margin-bottom: 20px;
-        page-break-inside: avoid;
-    }
-    
-    pre code {
-        background-color: transparent;
-        color: inherit;
-        padding: 0;
-        font-size: 9pt;
-    }
-    
-    table {
-        width: 100%;
-        border-collapse: collapse;
-        margin: 25px 0;
-        font-size: 10pt;
-        page-break-inside: avoid;
-    }
-    
-    th, td {
-        padding: 10px 12px;
-        text-align: left;
-        border-bottom: 1px solid #e2e8f0;
-    }
-    
-    th {
-        background-color: #0f172a;
-        color: #ffffff;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 8.5pt;
-        letter-spacing: 0.5px;
-    }
-    
-    tr:nth-child(even) {
-        background-color: #f8fafc;
-    }
-    
-    hr {
-        border: 0;
-        height: 1px;
-        background: #e2e8f0;
-        margin: 30px 0;
-    }
-    
-    .alert {
-        padding: 15px 20px;
-        margin: 20px 0;
-        border-radius: 6px;
-        font-size: 10pt;
-        page-break-inside: avoid;
-    }
-    
-    .note-alert {
-        background-color: #ecfeff;
-        border-left: 4px solid #06b6d4;
-        color: #155e75;
-    }
-    
-    .important-alert {
-        background-color: #fffbeb;
-        border-left: 4px solid #f59e0b;
-        color: #78350f;
-    }
-    
-    .cover {
-        height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        page-break-after: always;
-        padding-top: 50px;
-    }
-    
-    .cover-title {
-        font-size: 32pt;
-        font-weight: 700;
-        color: #0f172a;
-        margin-bottom: 10px;
-        text-transform: uppercase;
-        letter-spacing: 1.5px;
-    }
-    
-    .cover-subtitle {
-        font-size: 16pt;
-        color: #06b6d4;
-        margin-bottom: 50px;
-        font-weight: 400;
-    }
-    
-    .cover-details {
-        margin-top: 100px;
-        font-size: 11pt;
-        color: #64748b;
-        line-height: 1.8;
-    }
-    
-        </style>
-    </head>
-    <body>
-        <div class="cover">
-            <div style="font-size: 60pt; margin-bottom: 20px;">🎮</div>
-            <h1 class="cover-title" style="border:none;">Gato LiDAR</h1>
-            <p class="cover-subtitle">Consola de Control, Calibración y Juego Táctil</p>
-            <div class="cover-details">
-                
-            <p><strong>Manual de Usuario y Operación Técnica</strong></p>
-            <p>Raspberry Pi & Sensor LiDAR RPLidar C1</p>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Manual de Usuario - Sistema Interactivo LiDAR</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-            </div>
-        </div>
-        <div class="content">
-            <h1>Manual de Usuario - Gato LiDAR (Consola de Control, Calibración y Juego)</h1>
-<p>Este manual describe el funcionamiento, calibración y configuración de la consola web del proyecto <strong>Gato LiDAR</strong>, un sistema interactivo de juego "Tres en Línea" (Tic-Tac-Toe) basado en detección de impactos de balón mediante sensores LiDAR.</p>
-<hr />
-<h2>1. Acceso al Sistema</h2>
-<p>La consola web se ejecuta en un servidor local dentro de la Raspberry Pi. Para acceder a la interfaz de administración y calibración, siga los siguientes pasos:</p>
-<ol>
-<li><strong>Conexión al Hotspot de la Raspberry Pi</strong>:</li>
-<li>Busque redes Wi-Fi disponibles desde su dispositivo (computadora, tablet o smartphone).</li>
-<li>Conéctese a la red con SSID: <strong><code>gato1</code></strong> o <strong><code>gato2</code></strong> (el nombre de la red dependerá de cuál paquete/kit del sistema esté utilizando; esta variación en el nombre previene conflictos de red e interferencias en caso de que existan múltiples sistemas operando en el mismo espacio).</li>
-<li>
-<p>Esta red <strong>no requiere contraseña</strong>.</p>
-</li>
-<li>
-<p><strong>Acceso Web</strong>:</p>
-</li>
-<li>Abra cualquier navegador web e ingrese a la siguiente dirección IP y puerto:
-     <code>http://10.42.0.1:3000</code></li>
-</ol>
-<hr />
-<h2>2. Consola de Control (Vista General)</h2>
-<p>Una vez dentro del sistema, se presentará el Dashboard de administración. Este panel unificado permite configurar el hardware, ajustar la lógica de juego y visualizar los datos espaciales.</p>
-<p><img alt="Dashboard Principal de Control del Gato LiDAR" src="/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/gameplay_dashboard_1780761912558.png" /></p>
-<p>La interfaz se compone de tres paneles:
-- <strong>Panel de Configuración (Izquierda)</strong>: Ajustes técnicos del sistema divididos por pestañas (LiDAR, Reglas y Audio).
-- <strong>Preview Canvas / Visualizador LiDAR (Centro)</strong>: Renderizado en tiempo real de los datos del sensor y el área delimitada para el tablero.
-- <strong>Sección de Gameplay / Simulación del Gato (Derecha)</strong>: Representación visual del estado del juego en tiempo real con controles para simulación y reinicio rápido.</p>
-<hr />
-<h2>3. Configuración Detallada del LiDAR</h2>
-<p>La pestaña <strong>LiDAR</strong> es la sección más compleja del sistema, ya que controla la calibración geométrica y la interfaz física. Se subdivide en las siguientes áreas de ajuste:</p>
-<h3>3.1. Posición y Calibración del LiDAR</h3>
-<p>Ajusta la posición del sensor con respecto a la pantalla de juego:
-- <strong>LiDAR X / Y</strong>: Coordenadas físicas en metros para ubicar el centro del sensor sobre la pared de proyección.
-- <strong>Rotación</strong>: Alinea la orientación angular del sensor en grados para corregir desviaciones físicas de montaje.
-- <strong>Ángulos de Observación (Min / Max)</strong>: Delimita la ventana angular en la que el LiDAR buscará impactos de balón, ignorando lecturas fuera del área objetivo (ej. rebotes de fondo o de paredes laterales).</p>
-<p><img alt="Ajustes de Posición, Ángulos y Límites de Calibración" src="/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/lidar_seccion_calibracion_1780761782702.png" /></p>
-<hr />
-<h3>3.2. Setpoints de Muro y Tablero</h3>
-<p>Define los límites cartesianos de la zona de juego:
-- <strong>Dimensiones de Muro</strong>: Ancho y alto del muro físico de proyección (en metros).
-- <strong>Dimensiones de Tablero</strong>: Ancho, alto y coordenadas de inicio (X, Y) del marco del juego Tres en Línea dentro del muro. Estos setpoints delimitan dónde el sistema buscará los toques válidos para marcar las casillas.</p>
-<p><img alt="Configuración de Dimensiones y Filtros de Agrupamiento (Clustering)" src="/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/lidar_seccion_muro_y_filtros_1780761792394.png" /></p>
-<hr />
-<h3>3.3. Filtros del Balón (Clustering)</h3>
-<p>Configura el algoritmo DBSCAN para distinguir el balón de otros objetos o ruidos espaciales:
-- <strong>Puntos Mínimos / Máximos</strong>: Determina cuántos puntos reflejados por el sensor se necesitan para confirmar que se trata del balón.
-- <strong>Radio Esperado y Distancia Máxima</strong>: Define la geometría del objeto agrupado para validar que corresponde al tamaño real del balón.
-- <strong>Cooldown Antirrebote (ms)</strong>: Tiempo muerto de protección tras registrar un tiro, evitando que vibraciones secundarias o el rebote inmediato del balón se interpreten como tiros adicionales en el mismo o en otro turno.</p>
-<hr />
-<h3>3.4. Comunicación MQTT (ESP32)</h3>
-<p>Configura los parámetros de comunicación inalámbrica con el módulo ESP32 que controla la iluminación física de la pantalla:
-- <strong>Broker IP / Host y Puerto</strong>: Dirección de red del servidor Mosquitto que canaliza la comunicación.</p>
-<hr />
-<h3>3.5. Mapeos de Pines GPIO (LEDs Físicos)</h3>
-<p>Permite definir los números de pin físicos GPIO asociados a cada una de las 9 casillas del tablero:
-- <strong>Toque</strong>: Pin que se activa al presionar la celda.
-- <strong>Ficha X / Ficha O</strong>: Pines asignados para la iluminación física neon correspondiente a la marca de cada jugador en cada una de las casillas.
-- <strong>GPIO Turno X / O</strong>: Pines asignados para indicar de forma física a qué jugador le corresponde realizar el tiro activo.</p>
-<p><img alt="Parámetros de Broker MQTT y Mapeo GPIO para Leds Físicos" src="/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/lidar_seccion_mqtt_y_gpio_1780761801785.png" /></p>
-<hr />
-<h2>4. Reglas y Lógica de Juego</h2>
-<p>En la pestaña <strong>Reglas</strong>, se definen las variantes de comportamiento de la partida:</p>
-<p><img alt="Pestaña de Ajustes y Modos de Juego" src="/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/seccion_reglas_juego_1780761844316.png" /></p>
-<ul>
-<li><strong>Modo de Juego</strong>: </li>
-<li><code>👥 Jugador vs Jugador (PVP)</code>: Juego tradicional de dos competidores físicos alternando turnos.</li>
-<li><code>🤖 Jugador vs CPU (PVCPU)</code>: El sistema simula la jugada del contrincante "O" tras detectar el tiro del jugador "X".</li>
-<li><strong>Límite de Tiempo de Partida</strong>: Si se activa, la partida tiene un límite global de juego. Si finaliza el tiempo y no hay un Tres en Línea tradicional, gana el jugador que posea mayor cantidad de casillas marcadas.</li>
-<li><strong>Re-inicio Automático</strong>: Cooldown en segundos entre el término de una partida y la limpieza automática del tablero físico e interfaz.</li>
-<li><strong>Intento por Turno</strong>:</li>
-<li><em>Cambio de turno libre</em>: El jugador puede lanzar varias veces si su disparo cae fuera de las casillas válidas.</li>
-<li><em>Solo 1 intento por turno</em>: Cualquier tiro fallido o en celda ocupada consume el intento, pasando el turno de inmediato al oponente.</li>
-<li><strong>Permitir Robar Casilla</strong>: Habilita la regla dinámica de juego donde un tiro preciso sobre una casilla ocupada por el rival le quita la pertenencia y la reasigna al jugador actual.</li>
-</ul>
-<hr />
-<h2>5. Control de Audio y Bluetooth</h2>
-<p>La pestaña <strong>Audio</strong> gestiona los canales de retroalimentación sonora para los efectos de juego:</p>
-<p><img alt="Sección de Audio y Enlace Bluetooth" src="/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/seccion_audio_bluetooth_1780761854366.png" /></p>
-<ul>
-<li><strong>Salida de Audio Principal</strong>: Permite seleccionar entre los canales disponibles en el sistema de la Raspberry Pi (ej. HDMI, tarjeta de sonido USB o periféricos Bluetooth enlazados).</li>
-<li><strong>Probar Audio</strong>: Envía un tono de prueba inmediato al canal seleccionado para validar el nivel de volumen.</li>
-<li><strong>Volumen del Sistema</strong>: Control deslizante para el volumen maestro.</li>
-<li><strong>Periféricos Bluetooth</strong>: Escanea, vincula y conecta altavoces o diademas Bluetooth sin necesidad de acceder a la consola del sistema operativo.</li>
-</ul>
-<hr />
-<h2>6. Sección de Visualización y Simulación (Preview y Gameplay)</h2>
-<p>El Dashboard contiene dos herramientas visuales de gran utilidad durante el despliegue del sistema:</p>
-<h3>6.1. Preview Canvas (Calibración Espacial)</h3>
-<p>En la parte central, la nube de puntos se dibuja en tiempo real. Esto permite:
-1. Validar que la posición y rotación del sensor estén alineadas con el muro físico.
-2. Identificar zonas de ruido o falsos positivos (puntos que aparecen fuera del área de juego).
-3. Monitorear el centroide del impacto detectado del balón (representado con un círculo y radio dinámico).</p>
-<h3>6.2. Sección de Gameplay (Tablero Gato)</h3>
-<p>En la parte derecha se muestra el estado digital del juego.
-- Permite forzar o <strong>simular toques</strong> haciendo clic directo sobre cualquiera de las 9 casillas en la interfaz, facilitando el desarrollo y las pruebas de iluminación de LEDs físicos (MQTT) sin necesidad de impactar físicamente el muro con un balón.
-- Muestra de forma interactiva la ficha colocada ("X" o "O"), el turno actual en la cabecera y resalta en rojo la combinación ganadora al terminar la partida.</p>
-        </div>
-    </body>
-    </html>
-    
+        @page {
+            size: letter;
+            margin: 20mm 20mm 20mm 20mm;
+            @bottom-right {
+                content: counter(page);
+            }
+        }
+        
+        body {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #1e293b;
+            line-height: 1.6;
+            font-size: 11pt;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 40px;
+        }
+        
+        h1, h2, h3, h4 {
+            color: #0f172a;
+            font-weight: 700;
+            page-break-after: avoid;
+        }
+        
+        h1 {
+            font-size: 24pt;
+            border-bottom: 3px solid #06b6d4;
+            padding-bottom: 12px;
+            margin-top: 0;
+            margin-bottom: 25px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        h2 {
+            font-size: 15pt;
+            border-bottom: 1.5px solid #cbd5e1;
+            padding-bottom: 6px;
+            margin-top: 35px;
+            margin-bottom: 15px;
+            color: #0369a1;
+        }
+        
+        h3 {
+            font-size: 12pt;
+            margin-top: 25px;
+            margin-bottom: 10px;
+            color: #0f172a;
+        }
+        
+        p {
+            margin-top: 0;
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+        
+        ul, ol {
+            margin-top: 0;
+            margin-bottom: 15px;
+            padding-left: 20px;
+        }
+        
+        li {
+            margin-bottom: 6px;
+        }
+        
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 9.5pt;
+        }
+        
+        pre {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            font-size: 9pt;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 10pt;
+            page-break-inside: avoid;
+        }
+        
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 8.5pt;
+            letter-spacing: 0.5px;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        
+        hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 30px 0;
+        }
+
+        .highlight-box {
+            background-color: #f0fdf4;
+            border-left: 4px solid #22c55e;
+            padding: 12px 18px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+
+        .info-box {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 12px 18px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Manual de Usuario</h1>
+    <p style="text-align: center; font-size: 13pt; color: #64748b; margin-top: -15px; margin-bottom: 30px;">
+        <strong>Sistema Interactivo LiDAR</strong> &bull; Consola de Calibración y Catálogo de Experiencias
+    </p>
+
+    <p>Este manual describe el funcionamiento, puesta en marcha y uso del <strong>Sistema Interactivo LiDAR</strong>. La plataforma integra detección espacial en tiempo real mediante sensores LiDAR para transformar cualquier muro o pantalla en una superficie táctil e interactiva, ofreciendo tanto la <strong>Consola de Calibración Espacial</strong> como el <strong>Catálogo Multijuego de Experiencias 2D/3D</strong> y el juego tradicional de <strong>Gato LiDAR (Tres en Línea)</strong> con integración física de LEDs.</p>
+
+    <hr>
+
+    <h2>1. Inicio y Ejecución del Sistema</h2>
+    <p>El sistema cuenta con un backend centralizado desarrollado en <strong>FastAPI y Python-SocketIO</strong> que procesa los datos del LiDAR en tiempo real y sirve tanto las APIs como las aplicaciones web en el puerto <code>8000</code>.</p>
+
+    <h3>1.1. Ejecución Manual (Consola / Terminal)</h3>
+    <div class="highlight-box">
+        <p><strong>Comandos principales para iniciar el sistema:</strong></p>
+        <pre><code>cd /home/edgar-ld/Documentos/Proyectos/GatoLidar
+source venv/bin/activate
+python backend/app.py</code></pre>
+    </div>
+
+    <h3>1.2. Ejecución Automática con PM2 (Servicio en Segundo Plano)</h3>
+    <p>Para instalaciones fijas o despliegue desatendido en la Raspberry Pi:</p>
+    <pre><code>pm2 start ecosystem.config.json   # Iniciar el servicio
+pm2 logs gato-lidar-backend        # Consultar logs en tiempo real
+pm2 restart gato-lidar-backend     # Reiniciar servicio</code></pre>
+
+    <hr>
+
+    <h2>2. Acceso a la Plataforma Web</h2>
+    <p>Con el servidor en ejecución, abra su navegador web en el puerto <strong><code>8000</code></strong>:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Módulo</th>
+                <th>URL Local</th>
+                <th>URL en Red Local / Hotspot Pi</th>
+                <th>Descripción</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Consola de Calibración & Gato</strong></td>
+                <td><code>http://localhost:8000/</code></td>
+                <td><code>http://&lt;IP_RPI&gt;:8000/</code></td>
+                <td>Ajuste de coordenadas, visualizador 2D, clustering y juego Tres en Línea.</td>
+            </tr>
+            <tr>
+                <td><strong>Catálogo de Experiencias</strong></td>
+                <td><code>http://localhost:8000/catalogo/</code></td>
+                <td><code>http://&lt;IP_RPI&gt;:8000/catalogo/</code></td>
+                <td>Galería de juegos interactivos 2D/3D, fluidos y dinámicas para proyector.</td>
+            </tr>
+            <tr>
+                <td><strong>Documentación API (Swagger)</strong></td>
+                <td><code>http://localhost:8000/docs</code></td>
+                <td><code>http://&lt;IP_RPI&gt;:8000/docs</code></td>
+                <td>Explorador interactivo de endpoints REST y estado del backend.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <hr>
+
+    <h2>3. Catálogo de Experiencias y Juegos Interactivos (<code>/catalogo</code>)</h2>
+    <p>El Catálogo de Experiencias permite proyectar dinámicas visuales y sonoras sobre el muro que responden instantáneamente a los impactos de balones o toques físicos:</p>
+
+    <ul>
+        <li><strong>🌊 Ondas Acuáticas (<em>Fluid Waves</em>):</strong> Simulación hidrodinámica con propagación de ondas físicas y síntesis de audio armónico reactivo.</li>
+        <li><strong>🌸 Particle Bloom:</strong> Generación procedural de flores y esporas que crecen a partir del punto exacto de contacto.</li>
+        <li><strong>🌌 Nebulosa Cósmica:</strong> Vórtices de partículas estelares aceleradas por fuerzas gravitatorias de atracción al tocar el muro.</li>
+        <li><strong>🌿 Jardín Vivo:</strong> Ecosistema botánico continuo con crecimiento de tallos y hojas que evoluciona con cada impacto.</li>
+        <li><strong>✨ Red de Partículas:</strong> Nodos elásticos interconectados que vibran y rebotan ante perturbaciones espaciales.</li>
+        <li><strong>🦅 Bandada de Pájaros (<em>Boids</em>):</strong> Simulación de bandadas en vuelo armónico que se dispersan ante los balones.</li>
+        <li><strong>👻 Nube de Sprites:</strong> Sistema de partículas y entidades con físicas de persecución y dispersión.</li>
+        <li><strong>🏰 Haunted Mansion (<em>Cazafantasmas / Whac-A-Mole</em>):</strong> Minijuego 2D con temporizador, niveles y objetivos móviles para golpear con el balón.</li>
+    </ul>
+
+    <div class="info-box">
+        <strong>Consejo para Proyección:</strong> En la esquina superior del catálogo encontrará los botones para activar el modo de <em>Pantalla Completa</em> y alternar el visualizador de toques (Debug Pointer).
+    </div>
+
+    <hr>
+
+    <h2>4. Consola de Calibración Espacial (<code>/</code>)</h2>
+    <p>Permite adaptar el sistema a cualquier muro o pantalla física sin modificar código:</p>
+
+    <h3>4.1. Parámetros del LiDAR</h3>
+    <ul>
+        <li><strong>LiDAR X / Y:</strong> Distancia en metros desde el origen inferior izquierdo del muro hasta el sensor.</li>
+        <li><strong>Rotación:</strong> Corrección angular para compensar desviaciones en el montaje físico del sensor.</li>
+        <li><strong>Ángulos de Observación (Min / Max):</strong> Ventana angular de escaneo; todo rayo fuera de este rango se ignora para evitar ruidos de fondo.</li>
+    </ul>
+
+    <h3>4.2. Muro y Tablero Interactivo</h3>
+    <ul>
+        <li><strong>Dimensiones de Muro:</strong> Ancho y alto físico en metros de la superficie de proyección.</li>
+        <li><strong>Posición y Dimensiones de Tablero:</strong> Coordenadas (X, Y) y tamaño del área donde se delimitan las 9 casillas para el juego de Gato.</li>
+        <li><strong>📐 Ver Tablero:</strong> Casilla de verificación para mostrar u ocultar la cuadrícula sobre el canvas de calibración.</li>
+    </ul>
+
+    <h3>4.3. Filtros de Detección (Clustering DBSCAN)</h3>
+    <ul>
+        <li><strong>Puntos Mínimos / Máximos:</strong> Cantidad de reflexiones del sensor necesarias para confirmar un balón (elimina ruido por polvo o reflejos débiles).</li>
+        <li><strong>Radio Esperado y Distancia Máxima:</strong> Geometría del objeto agrupado para validar su centroide.</li>
+        <li><strong>Cooldown Antirrebote:</strong> Milisegundos de espera tras un tiro para evitar que el rebote del balón registre un doble toque no deseado.</li>
+    </ul>
+
+    <hr>
+
+    <h2>5. Juego de Gato LiDAR (Tres en Línea)</h2>
+    <p>El juego de Gato se puede operar directamente desde la consola:</p>
+    <ul>
+        <li><strong>Modos de Juego:</strong> Jugador vs Jugador (PVP) o Jugador vs CPU (PVCPU).</li>
+        <li><strong>Reglas Dinámicas:</strong> Límite de tiempo global, modo de robo de casillas y restricción de un solo intento por turno.</li>
+        <li><strong>Luces Físicas y MQTT:</strong> Los eventos de casillas y turnos se publican automáticamente vía MQTT para controlar tiras LED o indicadores físicos enlazados al ESP32.</li>
+    </ul>
+
+    <hr>
+
+    <h2>6. Resumen de Solución de Problemas</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Situación</th>
+                <th>Posible Causa</th>
+                <th>Acción Recomendada</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>El LiDAR no detecta puntos</td>
+                <td>Cable USB desconectado o puerto ocupado.</td>
+                <td>Revisar conexión del puerto <code>/dev/ttyUSB0</code> e iniciar de nuevo el backend.</td>
+            </tr>
+            <tr>
+                <td>Puntos fantasma fuera del muro</td>
+                <td>Rango angular de observación demasiado amplio.</td>
+                <td>Reducir los ángulos mínimo y máximo en el panel de calibración.</td>
+            </tr>
+            <tr>
+                <td>No hay sonido en el catálogo</td>
+                <td>El navegador bloquea audio antes de interacción.</td>
+                <td>Hacer clic en la pantalla para activar el audio y revisar la pestaña Audio de la consola.</td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>

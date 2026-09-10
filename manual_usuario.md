@@ -1,122 +1,151 @@
-# Manual de Usuario - Gato LiDAR (Consola de Control, Calibración y Juego)
+# Manual de Usuario - Sistema Interactivo LiDAR (Consola de Calibración & Catálogo de Juegos)
 
-Este manual describe el funcionamiento, calibración y configuración de la consola web del proyecto **Gato LiDAR**, un sistema interactivo de juego "Tres en Línea" (Tic-Tac-Toe) basado en detección de impactos de balón mediante sensores LiDAR.
-
----
-
-## 1. Acceso al Sistema
-La consola web se ejecuta en un servidor local dentro de la Raspberry Pi. Para acceder a la interfaz de administración y calibración, siga los siguientes pasos:
-
-1. **Conexión al Hotspot de la Raspberry Pi**:
-   - Busque redes Wi-Fi disponibles desde su dispositivo (computadora, tablet o smartphone).
-   - Conéctese a la red con SSID: **`gato1`** o **`gato2`** (el nombre de la red dependerá de cuál paquete/kit del sistema esté utilizando; esta variación en el nombre previene conflictos de red e interferencias en caso de que existan múltiples sistemas operando en el mismo espacio).
-   - Esta red **no requiere contraseña**.
-
-2. **Acceso Web**:
-   - Abra cualquier navegador web e ingrese a la siguiente dirección IP y puerto:
-     ```
-     http://10.42.0.1:3000
-     ```
+Este manual describe el funcionamiento, calibración y uso del **Sistema Interactivo LiDAR**, una plataforma multisensorial de detección de impactos espaciales en muros y pantallas interactivas mediante sensores LiDAR. La plataforma integra una **Consola de Calibración y Control**, el juego tradicional de **Gato LiDAR (Tres en Línea)** con soporte de hardware físico (LEDs y ESP32) y un **Catálogo Completo de Experiencias y Minijuegos Interactivos 2D/3D**.
 
 ---
 
-## 2. Consola de Control (Vista General)
-Una vez dentro del sistema, se presentará el Dashboard de administración. Este panel unificado permite configurar el hardware, ajustar la lógica de juego y visualizar los datos espaciales.
+## 1. Inicio y Ejecución del Sistema
 
-![Dashboard Principal de Control del Gato LiDAR](/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/gameplay_dashboard_1780761912558.png)
+El sistema cuenta con un backend centralizado desarrollado en **FastAPI y Python-SocketIO** que gestiona la adquisición del sensor LiDAR, el procesamiento espacial, la lógica de juego y el servidor web unificado.
 
-La interfaz se compone de tres paneles:
-- **Panel de Configuración (Izquierda)**: Ajustes técnicos del sistema divididos por pestañas (LiDAR, Reglas y Audio).
-- **Preview Canvas / Visualizador LiDAR (Centro)**: Renderizado en tiempo real de los datos del sensor y el área delimitada para el tablero.
-- **Sección de Gameplay / Simulación del Gato (Derecha)**: Representación visual del estado del juego en tiempo real con controles para simulación y reinicio rápido.
+### 1.1. Ejecución Manual (Línea de Comandos)
+Para iniciar el servidor en primer plano desde la terminal:
 
----
+```bash
+# 1. Abrir terminal y dirigirse al directorio del proyecto
+cd /home/edgar-ld/Documentos/Proyectos/GatoLidar
 
-## 3. Configuración Detallada del LiDAR
-La pestaña **LiDAR** es la sección más compleja del sistema, ya que controla la calibración geométrica y la interfaz física. Se subdivide en las siguientes áreas de ajuste:
+# 2. Activar el entorno virtual de Python
+source venv/bin/activate
 
-### 3.1. Posición y Calibración del LiDAR
-Ajusta la posición del sensor con respecto a la pantalla de juego:
-- **LiDAR X / Y**: Coordenadas físicas en metros para ubicar el centro del sensor sobre la pared de proyección.
-- **Rotación**: Alinea la orientación angular del sensor en grados para corregir desviaciones físicas de montaje.
-- **Ángulos de Observación (Min / Max)**: Delimita la ventana angular en la que el LiDAR buscará impactos de balón, ignorando lecturas fuera del área objetivo (ej. rebotes de fondo o de paredes laterales).
+# 3. Iniciar el servidor central
+python backend/app.py
+```
 
-![Ajustes de Posición, Ángulos y Límites de Calibración](/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/lidar_seccion_calibracion_1780761782702.png)
+### 1.2. Ejecución Automática en Segundo Plano (PM2)
+En entornos de producción o instalación fija (ej. Raspberry Pi en muro interactivo), el servidor puede gestionarse con **PM2**:
 
----
+```bash
+# Iniciar servicio en segundo plano
+pm2 start ecosystem.config.json
 
-### 3.2. Setpoints de Muro y Tablero
-Define los límites cartesianos de la zona de juego:
-- **Dimensiones de Muro**: Ancho y alto del muro físico de proyección (en metros).
-- **Dimensiones de Tablero**: Ancho, alto y coordenadas de inicio (X, Y) del marco del juego Tres en Línea dentro del muro. Estos setpoints delimitan dónde el sistema buscará los toques válidos para marcar las casillas.
+# Ver logs en tiempo real
+pm2 logs gato-lidar-backend
 
-![Configuración de Dimensiones y Filtros de Agrupamiento (Clustering)](/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/lidar_seccion_muro_y_filtros_1780761792394.png)
-
----
-
-### 3.3. Filtros del Balón (Clustering)
-Configura el algoritmo DBSCAN para distinguir el balón de otros objetos o ruidos espaciales:
-- **Puntos Mínimos / Máximos**: Determina cuántos puntos reflejados por el sensor se necesitan para confirmar que se trata del balón.
-- **Radio Esperado y Distancia Máxima**: Define la geometría del objeto agrupado para validar que corresponde al tamaño real del balón.
-- **Cooldown Antirrebote (ms)**: Tiempo muerto de protección tras registrar un tiro, evitando que vibraciones secundarias o el rebote inmediato del balón se interpreten como tiros adicionales en el mismo o en otro turno.
+# Reiniciar o detener el servicio
+pm2 restart gato-lidar-backend
+pm2 stop gato-lidar-backend
+```
 
 ---
 
-### 3.4. Comunicación MQTT (ESP32)
-Configura los parámetros de comunicación inalámbrica con el módulo ESP32 que controla la iluminación física de la pantalla:
-- **Broker IP / Host y Puerto**: Dirección de red del servidor Mosquitto que canaliza la comunicación.
+## 2. Acceso a la Plataforma Web
+
+Una vez que el servidor se encuentra en ejecución, está disponible en el puerto **`8000`**.
+
+### 2.1. Conexión de Red
+- **Desde la misma computadora:** Acceda directamente a `http://localhost:8000`.
+- **Desde una red local o Hotspot de la Raspberry Pi:** 
+  - Conéctese a la red Wi-Fi de la Raspberry Pi (SSID típico: `gato1` o `gato2`) o a la misma red local.
+  - Ingrese en el navegador a: `http://<IP_DE_LA_RASPBERRY>:8000` (ejemplo: `http://10.42.0.1:8000` o `http://192.168.0.X:8000`).
+
+### 2.2. Mapa de Rutas y Módulos
+
+| URL | Módulo | Descripción |
+| :--- | :--- | :--- |
+| **`http://<IP>:8000/`** | **Consola de Calibración & Gato** | Panel de administración de hardware, parámetros espaciales y juego Tres en Línea. |
+| **`http://<IP>:8000/catalogo/`** | **Catálogo de Experiencias** | Galería interactiva con dinámicas de partículas, fluidos y juegos 2D/3D para proyección. |
+| **`http://<IP>:8000/docs`** | **API REST (Swagger)** | Documentación interactiva para consulta y modificación de estado por HTTP. |
 
 ---
 
-### 3.5. Mapeos de Pines GPIO (LEDs Físicos)
-Permite definir los números de pin físicos GPIO asociados a cada una de las 9 casillas del tablero:
-- **Toque**: Pin que se activa al presionar la celda.
-- **Ficha X / Ficha O**: Pines asignados para la iluminación física neon correspondiente a la marca de cada jugador en cada una de las casillas.
-- **GPIO Turno X / O**: Pines asignados para indicar de forma física a qué jugador le corresponde realizar el tiro activo.
+## 3. Catálogo de Experiencias y Juegos Interactivos (`/catalogo`)
 
-![Parámetros de Broker MQTT y Mapeo GPIO para Leds Físicos](/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/lidar_seccion_mqtt_y_gpio_1780761801785.png)
+El Catálogo de Experiencias está diseñado para proyectores de gran formato o muros LED. Al recibir impactos o toques detectados por el LiDAR (o clics de ratón en pruebas), las experiencias reaccionan en tiempo real con animaciones fluidas y síntesis de audio procedural.
 
----
+```text
+                                  ┌──────────────────────────┐
+                                  │   CATÁLOGO INTERACTIVO   │
+                                  │  (http://<IP>:8000/catalogo)│
+                                  └─────────────┬────────────┘
+                                                │
+         ┌──────────────────┬───────────────────┼───────────────────┬──────────────────┐
+         ▼                  ▼                   ▼                   ▼                  ▼
+  🌊 Ondas Acuáticas   🌸 Particle Bloom   🌌 Nebulosa Cósmica  🌿 Jardín Vivo   🏰 Haunted Mansion
+ (Fluido + Audio)     (Esporas botánicas) (Vórtices estelares) (Botánica viva)    (Cazafantasmas 2D)
+```
 
-## 4. Reglas y Lógica de Juego
-En la pestaña **Reglas**, se definen las variantes de comportamiento de la partida:
+### 3.1. Experiencias Disponibles
+1. **🌊 Ondas Acuáticas (*Fluid Waves*)**: Simulación hidrodinámica reactiva donde cada impacto sobre el muro genera ondas con dispersión física y tonos armónicos acuáticos.
+2. **🌸 Particle Bloom**: Generación de flores y esporas reactivas. Las partículas se desplazan y florecen con patrones dinámicos de color.
+3. **🌌 Nebulosa Cósmica**: Campo de partículas espaciales gobernadas por gravedad y turbulencia que interactúan con los puntos de contacto.
+4. **🌿 Jardín Vivo**: Ecosistema botánico donde los impactos estimulan el crecimiento de tallos, pétalos y hojas que evolucionan continuamente.
+5. **✨ Red de Partículas (*Constellations*)**: Nodos interconectados por resortes virtuales elásticos que se agitan al recibir impactos.
+6. **🦅 Bandada de Pájaros (*Boids*)**: Simulación de bandadas que vuelan en armonía y se dispersan rápidamente ante la presencia de un impacto.
+7. **👻 Nube de Sprites**: Sistema de entidades gráficas con comportamientos de persecución y dispersión.
+8. **🏰 Haunted Mansion (*Cazafantasmas / Whac-A-Mole*)**: Minijuego interactivo 2D donde aparecen fantasmas en ventanas y puertas. Los jugadores deben golpearlos para sumar puntos antes de que se agote el tiempo.
 
-![Pestaña de Ajustes y Modos de Juego](/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/seccion_reglas_juego_1780761844316.png)
-
-- **Modo de Juego**: 
-  - `👥 Jugador vs Jugador (PVP)`: Juego tradicional de dos competidores físicos alternando turnos.
-  - `🤖 Jugador vs CPU (PVCPU)`: El sistema simula la jugada del contrincante "O" tras detectar el tiro del jugador "X".
-- **Límite de Tiempo de Partida**: Si se activa, la partida tiene un límite global de juego. Si finaliza el tiempo y no hay un Tres en Línea tradicional, gana el jugador que posea mayor cantidad de casillas marcadas.
-- **Re-inicio Automático**: Cooldown en segundos entre el término de una partida y la limpieza automática del tablero físico e interfaz.
-- **Intento por Turno**:
-  - *Cambio de turno libre*: El jugador puede lanzar varias veces si su disparo cae fuera de las casillas válidas.
-  - *Solo 1 intento por turno*: Cualquier tiro fallido o en celda ocupada consume el intento, pasando el turno de inmediato al oponente.
-- **Permitir Robar Casilla**: Habilita la regla dinámica de juego donde un tiro preciso sobre una casilla ocupada por el rival le quita la pertenencia y la reasigna al jugador actual.
-
----
-
-## 5. Control de Audio y Bluetooth
-La pestaña **Audio** gestiona los canales de retroalimentación sonora para los efectos de juego:
-
-![Sección de Audio y Enlace Bluetooth](/home/edgar-ld/.gemini/antigravity/brain/306cd5e2-0b76-4ebe-837f-bbecfad43c56/seccion_audio_bluetooth_1780761854366.png)
-
-- **Salida de Audio Principal**: Permite seleccionar entre los canales disponibles en el sistema de la Raspberry Pi (ej. HDMI, tarjeta de sonido USB o periféricos Bluetooth enlazados).
-- **Probar Audio**: Envía un tono de prueba inmediato al canal seleccionado para validar el nivel de volumen.
-- **Volumen del Sistema**: Control deslizante para el volumen maestro.
-- **Periféricos Bluetooth**: Escanea, vincula y conecta altavoces o diademas Bluetooth sin necesidad de acceder a la consola del sistema operativo.
+### 3.2. Controles en Pantalla
+- **Selector de Experiencia:** Menú flotante para cambiar de dinámica rápidamente.
+- **Pantalla Completa:** Botón para ocultar barras de navegación y optimizar la salida al proyector.
+- **Modo Debug / Puntero:** Muestra los puntos de impacto detectados por el LiDAR en tiempo real.
 
 ---
 
-## 6. Sección de Visualización y Simulación (Preview y Gameplay)
-El Dashboard contiene dos herramientas visuales de gran utilidad durante el despliegue del sistema:
+## 4. Consola de Calibración y Control (`/`)
 
-### 6.1. Preview Canvas (Calibración Espacial)
-En la parte central, la nube de puntos se dibuja en tiempo real. Esto permite:
-1. Validar que la posición y rotación del sensor estén alineadas con el muro físico.
-2. Identificar zonas de ruido o falsos positivos (puntos que aparecen fuera del área de juego).
-3. Monitorear el centroide del impacto detectado del balón (representado con un círculo y radio dinámico).
+La Consola Principal permite afinar la respuesta del sensor LiDAR a la geometría física del muro y gestionar el juego Tres en Línea.
 
-### 6.2. Sección de Gameplay (Tablero Gato)
-En la parte derecha se muestra el estado digital del juego.
-- Permite forzar o **simular toques** haciendo clic directo sobre cualquiera de las 9 casillas en la interfaz, facilitando el desarrollo y las pruebas de iluminación de LEDs físicos (MQTT) sin necesidad de impactar físicamente el muro con un balón.
-- Muestra de forma interactiva la ficha colocada ("X" o "O"), el turno actual en la cabecera y resalta en rojo la combinación ganadora al terminar la partida.
+### 4.1. Configuración Geométrica del LiDAR
+- **LiDAR X / Y (m):** Posición del sensor (en metros) respecto a la esquina inferior izquierda del muro de proyección.
+- **Rotación (°):** Ángulo de corrección para compensar inclinaciones físicas del sensor al estar montado.
+- **Ángulos de Observación (Min / Max):** Ventana angular activa (en grados). Todo punto reflejado fuera de este rango es descartado inmediatamente, evitando detectar personas en los costados o mobiliario circundante.
+
+### 4.2. Dimensiones del Muro y Tablero Interactivo
+- **Ancho y Alto de Muro (m):** Dimensiones físicas totales del área de proyección.
+- **Posición X / Y del Tablero (m):** Coordenadas de inicio del área activa de juego.
+- **Ancho y Alto del Tablero (m):** Tamaño del marco interactivo del Tres en Línea.
+- **Interruptor "📐 Ver Tablero":** Muestra u oculta la cuadrícula de juego en el visualizador 2D en tiempo real.
+
+### 4.3. Filtros de Detección de Balón (Clustering)
+- **Puntos Mínimos / Máximos:** Rango de puntos que debe reflejar el balón para considerarse un toque válido (ignora reflejos aislados por polvo o manos de paso rápido).
+- **Distancia Máxima de Agrupamiento (`cluster_max_dist`):** Distancia máxima en metros entre puntos adyacentes para formar un grupo único.
+- **Radio Esperado y Tolerancia:** Radio geométrico del objeto (ej. balón de fútbol ~0.11 m) para validar su silueta y calcular el centroide exacto de impacto.
+- **Cooldown Antirrebote (ms):** Tiempo muerto tras un impacto para evitar disparos múltiples accidentales debido al rebote del balón.
+
+### 4.4. Audio y Periféricos Bluetooth
+- **Selector de Salida:** Permite alternar entre HDMI, altavoces integrados, tarjetas USB y altavoces Bluetooth.
+- **Control de Volumen:** Ajuste maestro del nivel de sonido del sistema.
+- **Gestor Bluetooth:** Escaneo y emparejamiento directo de bocinas inalámbricas desde la interfaz web.
+
+---
+
+## 5. Dinámica de Juego: Gato LiDAR (Tres en Línea)
+
+El módulo de juego de Gato permite tanto partidas recreativas simples como torneos interactivos con retroalimentación lumínica.
+
+### 5.1. Modos y Reglas
+- **Modo de Juego:**
+  - `👥 Jugador vs Jugador (PVP)`: Dos jugadores alternan lanzamientos en el muro físico.
+  - `🤖 Jugador vs CPU (PVCPU)`: El sistema responde automáticamente con jugadas estratégicas.
+- **Intento por Turno:**
+  - *Libre:* El jugador puede seguir lanzando hasta acertar en una casilla válida.
+  - *1 Intento:* Fallar el tiro o golpear una casilla no permitida pasa el turno inmediatamente.
+- **Robo de Casilla:** Permite capturar una casilla del contrincante al impactarla directamente.
+- **Límite de Tiempo:** Finaliza la partida tras un tiempo límite, coronando a quien domine más casillas.
+
+### 5.2. Mapeo de Hardware y Luces LED (MQTT / ESP32)
+- **Broker MQTT:** Dirección y puerto del broker Mosquitto que sincroniza el estado de las 9 casillas.
+- **Mapeo de Pines GPIO:** Asignación individual de pines para la animación de toque, luces de turno y marcas de jugador (`X` y `O`) en cada celda física.
+
+---
+
+## 6. Solución de Problemas Frecuentes
+
+| Síntoma | Causa Posible | Solución |
+| :--- | :--- | :--- |
+| **No se detectan impactos en el muro** | El sensor no está conectado o el puerto serial cambió. | Verifique que el cable USB esté conectado y revise si el dispositivo aparece en `/dev/ttyUSB0`. |
+| **Puntos fantasma o fuera del muro** | Ángulo de observación demasiado amplio o reflejos de pared lateral. | Reduzca los límites de `Ángulo Mínimo` y `Ángulo Máximo` en el panel de calibración. |
+| **El balón no registra toque** | El parámetro de `Puntos Mínimos` es demasiado alto. | Reduzca `Puntos Mínimos` a 2 o 3 y aumente ligeramente `cluster_max_dist`. |
+| **Doble toque inmediato al lanzar** | Cooldown antirrebote muy bajo. | Incremente el tiempo de `Cooldown Antirrebote` a 600 ms o superior. |
+| **Sin sonido en las experiencias** | El navegador bloqueó el autoplay o el dispositivo de audio está apagado. | Haga clic en cualquier parte de la pantalla para activar el contexto de Web Audio y revise la pestaña de Audio en la consola. |
