@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Catálogo de Instalaciones y Experiencias Interactivas Inmersivas para Museos, Eventos y Activaciones Comerciales.">
+    <title>Catálogo de Experiencias Interactivas | KINETIC</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Main Catalog View -->
+    <div id="catalog-view" class="catalog-view">
+        <header class="catalog-header">
+            <div class="header-badge">PROYECTOR & LIDAR READY</div>
+            <h1 class="catalog-title">CATÁLOGO DE EXPERIENCIAS INTERACTIVAS</h1>
+            <p class="catalog-subtitle">Instalaciones inmersivas en tiempo real para eventos, museos y activaciones comerciales</p>
+        </header>
+
+        <main class="catalog-main">
+            <div class="cards-grid">
+                
+                <!-- Active Experience: Gato LiDAR -->
+                <article class="experience-card active-card" data-experience="gato" tabindex="0">
+                    <div class="card-glow"></div>
+                    <div class="card-status active">DISPONIBLE</div>
+                    <div class="card-preview" style="background: radial-gradient(circle, #00FF8022, transparent); display: flex; align-items: center; justify-content: center; border: 1px dashed rgba(0, 255, 128, 0.4);">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#00FF80" stroke-width="2"><path d="M3 3l18 18M3 21L21 3M4 12h16M12 4v16"/></svg>
+                    </div>
+                    <div class="card-content">
+                        <span class="card-category">Juego Interactivo</span>
+                        <h2 class="card-title">Gato LiDAR</h2>
+                        <p class="card-description">
+                            Clásico juego interactivo de Tres en Raya con soporte para toques múltiples físicos en el muro a través de sensores LiDAR.
+                        </p>
+                        <div class="card-footer">
+                            <span class="card-tech">React & Socket.io • LiDAR Ready</span>
+                            <button class="btn-launch" id="btn-launch-gato">
+                                <span>Iniciar Juego</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Active Experience: Ondas Interactivas -->
+                <article class="experience-card active-card" data-experience="waves" tabindex="0">
+                    <div class="card-glow"></div>
+                    <div class="card-status active">DISPONIBLE</div>
+                    <div class="card-preview waves-preview">
+                        <div class="wave-ring ring-1"></div>
+                        <div class="wave-ring ring-2"></div>
+                        <div class="wave-ring ring-3"></div>
+                    </div>
+                    <div class="card-content">
+                        <span class="card-category">Física Sensorial & Audio Sintetizado</span>
+                        <h2 class="card-title">Ondas Interactivas</h2>
+                        <p class="card-description">
+                            Resplandor orgánico y síntesis sonora reactiva en tiempo real. Responde a toques multitáctiles, mouse o coordenadas LiDAR externamente.
+                        </p>
+                        <div class="card-footer">
+                            <span class="card-tech">Web Audio API • 60 FPS Canvas</span>
+                            <button class="btn-launch" id="btn-launch-waves">
+                                <span>Iniciar Experiencia</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Active Experience: Particle Bloom -->
+                <article class="experience-card active-card" data-experience="bloom" tabindex="0">
+                    <div class="card-glow"></div>
+                    <div class="card-status active">DISPONIBLE</div>
+                    <div class="card-preview bloom-preview">
+                        <div class="bloom-petal petal-1"></div>
+                        <div class="bloom-petal petal-2"></div>
+                        <div class="bloom-petal petal-3"></div>
+                        <div class="bloom-core"></div>
+                    </div>
+                    <div class="card-content">
+                        <span class="card-category">Turbulencia Orgánica & Ruido Simplex</span>
+                        <h2 class="card-title">Particle Bloom</h2>
+                        <p class="card-description">
+                            Floración de partículas en 4 etapas con constelaciones luminosas y sintetizador de campanas cristalinas.
+                        </p>
+                        <div class="card-footer">
+                            <span class="card-tech">Simplex 2D • Object Pool 60 FPS</span>
+                            <button class="btn-launch" id="btn-launch-bloom">
+                                <span>Iniciar Experiencia</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Active Experience: Cosmic Nebula -->
+                <article class="experience-card active-card" data-experience="nebula" tabindex="0">
+                    <div class="card-glow"></div>
+                    <div class="card-status active">DISPONIBLE</div>
+                    <div class="card-preview nebula-preview">
+                        <div class="nebula-dust dust-1"></div>
+                        <div class="nebula-dust dust-2"></div>
+                        <div class="nebula-dust dust-3"></div>
+                        <div class="nebula-core"></div>
+                    </div>
+                    <div class="card-content">
+                        <span class="card-category">Materia Cósmica & Agujero Negro</span>
+                        <h2 class="card-title">Nebulosa Cósmica</h2>
+                        <p class="card-description">
+                            Nube de materia viva con atracción de Agujero Negro, ondas de choque por toque y remolinos de viento estelar.
+                        </p>
+                        <div class="card-footer">
+                            <span class="card-tech">Física Fluida • Pantallas 4K / LiDAR</span>
+                            <button class="btn-launch" id="btn-launch-nebula">
+                                <span>Iniciar Experiencia</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Active Experience: Jardín Vivo Procedural -->
+                <article class="experience-card active-card" data-experience="garden" tabindex="0">
+                    <div class="card-glow"></div>
+                    <div class="card-status active">DISPONIBLE</div>
+                    <div class="card-preview bloom-preview">
+                        <div class="bloom-petal petal-1"></div>
+                        <div class="bloom-petal petal-2"></div>
+                        <div class="bloom-petal petal-3"></div>
+                        <div class="bloom-core"></div>
+                    </div>
+                    <div class="card-content">
+                        <span class="card-category">Botánica Procedural & Viento</span>
+                        <h2 class="card-title">Jardín Vivo Procedural</h2>
+                        <p class="card-description">
+                            Jardín botánico con 7 especies (Sakura, Magnolia, Loto, Peonía, Margarita, Diente de León), crecimiento por retención y viento por swipes.
+                        </p>
+                        <div class="card-footer">
+                            <span class="card-tech">7 Especies Botánicas • Viento & semillas</span>
+                            <button class="btn-launch" id="btn-launch-garden">
+                                <span>Iniciar Experiencia</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                <!-- Active Experience: Sprites Instanciados 3D -->
+                <article class="experience-card active-card" data-experience="sprites" tabindex="0">
+                    <div class="card-glow"></div>
+                    <div class="card-status active">DISPONIBLE</div>
+                    <div class="card-preview nebula-preview">
+                        <div class="nebula-dust dust-1" style="background: cyan;"></div>
+                        <div class="nebula-dust dust-2" style="background: magenta;"></div>
+                        <div class="nebula-dust dust-3" style="background: violet;"></div>
+                        <div class="nebula-core" style="box-shadow: 0 0 20px #00F0FF;"></div>
+                    </div>
+                    <div class="card-content">
+                        <span class="card-category">Partículas 3D & WebGL/WebGPU</span>
+                        <h2 class="card-title">Sprites Instanciados 3D</h2>
+                        <p class="card-description">
+                            Enjambre de 5,000+ sprites 3D instanciados con Three.js. Fuerza gravitacional, impulsos radiales y síntesis armónica.
+                        </p>
+                        <div class="card-footer">
+                            <span class="card-tech">Three.js InstancedMesh • 60 FPS 3D</span>
+                            <button class="btn-launch" id="btn-launch-sprites">
+                                <span>Iniciar Experiencia</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                <!-- Active Experience: Bandada de Aves 3D -->
+                <article class="experience-card active-card" data-experience="birds" tabindex="0">
+                    <div class="card-glow"></div>
+                    <div class="card-status active">DISPONIBLE</div>
+                    <div class="card-preview nebula-preview">
+                        <div class="nebula-dust dust-1" style="background: #00F0FF;"></div>
+                        <div class="nebula-dust dust-2" style="background: #e0e7ff;"></div>
+                        <div class="nebula-dust dust-3" style="background: #c026d3;"></div>
+                        <div class="nebula-core" style="box-shadow: 0 0 20px #c026d3;"></div>
+                    </div>
+                    <div class="card-content">
+                        <span class="card-category">Física de Bandadas & Boids 3D</span>
+                        <h2 class="card-title">Bandada de Aves 3D</h2>
+                        <p class="card-description">
+                            Murmuración autónoma de cientos de aves 3D volando en enjambre con dinámicas de dispersión por pánico y atracción al tacto LiDAR.
+                        </p>
+                        <div class="card-footer">
+                            <span class="card-tech">Boids Flocking 3D • Instanced Geometry</span>
+                            <button class="btn-launch" id="btn-launch-birds">
+                                <span>Iniciar Experiencia</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                <!-- Active Experience: Partículas Vinculadas 3D -->
+                <article class="experience-card active-card" data-experience="linkedparticles" tabindex="0">
+                    <div class="card-glow"></div>
+                    <div class="card-status active">DISPONIBLE</div>
+                    <div class="card-preview nebula-preview">
+                        <div class="nebula-dust dust-1" style="background: #3B82F6;"></div>
+                        <div class="nebula-dust dust-2" style="background: #00F0FF;"></div>
+                        <div class="nebula-dust dust-3" style="background: #EC4899;"></div>
+                        <div class="nebula-core" style="box-shadow: 0 0 20px #00F0FF;"></div>
+                    </div>
+                    <div class="card-content">
+                        <span class="card-category">Red Electromagnética & Plexus 3D</span>
+                        <h2 class="card-title">Partículas Vinculadas 3D</h2>
+                        <p class="card-description">
+                            Constelación de nodos 3D interconectados por líneas de energía dinámica. Enlaces de rayos láser al contacto LiDAR y ondas electrónicas.
+                        </p>
+                        <div class="card-footer">
+                            <span class="card-tech">Plexus Network 3D • LineSegments</span>
+                            <button class="btn-launch" id="btn-launch-linkedparticles">
+                                <span>Iniciar Experiencia</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                <!-- Active Experience: Caza Fantasmas -->
+                <article class="experience-card active-card" data-experience="ghosts" tabindex="0">
+                    <div class="card-glow"></div>
+                    <div class="card-status active">DISPONIBLE</div>
+                    <div class="card-preview nebula-preview">
+                        <div class="nebula-dust dust-1" style="background: #C026D3;"></div>
+                        <div class="nebula-dust dust-2" style="background: #00F0FF;"></div>
+                        <div class="nebula-dust dust-3" style="background: #F59E0B;"></div>
+                        <div class="nebula-core" style="box-shadow: 0 0 20px #00F0FF;"></div>
+                    </div>
+                    <div class="card-content">
+                        <span class="card-category">Juego Whac-A-Mole 2D Espeluznante</span>
+                        <h2 class="card-title">Caza Fantasmas: Mansión Embrujada</h2>
+                        <p class="card-description">
+                            Atrapa a los fantasmas que asoman por las ventanas de la mansión gótica. Acumula puntos, multiplica tus combos y evita a los fantasmas trampa.
+                        </p>
+                        <div class="card-footer">
+                            <span class="card-tech">Whac-A-Mole 2D • Canvas Sprites</span>
+                            <button class="btn-launch" id="btn-launch-ghosts">
+                                <span>Iniciar Experiencia</span>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Future Experience: Arena -->
+                <article class="experience-card coming-soon" data-experience="sand">
+                    <div class="card-status upcoming">PRÓXIMAMENTE</div>
+                    <div class="card-preview sand-preview"></div>
+                    <div class="card-content">
+                        <span class="card-category">Simulación Granular</span>
+                        <h2 class="card-title">Arena Sonora</h2>
+                        <p class="card-description">Patrones de Chladni y acumulación granular de luz con resonancia acoplada.</p>
+                        <div class="card-footer">
+                            <span class="card-tech">Physics Canvas</span>
+                            <button class="btn-launch disabled" disabled>Próximamente</button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Future Experience: Fuego -->
+                <article class="experience-card coming-soon" data-experience="fire">
+                    <div class="card-status upcoming">PRÓXIMAMENTE</div>
+                    <div class="card-preview fire-preview"></div>
+                    <div class="card-content">
+                        <span class="card-category">Plasma & Chispa</span>
+                        <h2 class="card-title">Fuego Cuántico</h2>
+                        <p class="card-description">Llamas etéreas en colores pastel con disipación térmica y estelas luminosas.</p>
+                        <div class="card-footer">
+                            <span class="card-tech">Procedural Shader</span>
+                            <button class="btn-launch disabled" disabled>Próximamente</button>
+                        </div>
+                    </div>
+                </article>
+
+                <!-- Future Experience: Lluvia -->
+                <article class="experience-card coming-soon" data-experience="rain">
+                    <div class="card-status upcoming">PRÓXIMAMENTE</div>
+                    <div class="card-preview rain-preview"></div>
+                    <div class="card-content">
+                        <span class="card-category">Cinemática Lumínica</span>
+                        <h2 class="card-title">Lluvia de Luz</h2>
+                        <p class="card-description">Gotas prismáticas con impacto sonoro en escalas pentatónicas e iluminación ambiental.</p>
+                        <div class="card-footer">
+                            <span class="card-tech">Particle System</span>
+                            <button class="btn-launch disabled" disabled>Próximamente</button>
+                        </div>
+                    </div>
+                </article>
+
+            </div>
+        </main>
+
+        <footer class="catalog-footer">
+            <p>KINETIC Interactive Experience Framework &copy; 2026 • Diseñado para Pantallas Táctiles, Proyecciones y Sensores LiDAR</p>
+        </footer>
+    </div>
+
+    <!-- Fullscreen Experience Overlay -->
+    <div id="experience-container" class="experience-container hidden">
+        <!-- Canvas Context -->
+        <canvas id="experience-canvas"></canvas>
+
+        <!-- Floating HUD Overlay -->
+        <div id="experience-hud" class="experience-hud">
+            <div class="hud-left">
+                <button id="btn-back" class="hud-btn hud-btn-back" title="Volver al Catálogo">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    <span>Catálogo</span>
+                </button>
+                <div class="hud-title-wrap">
+                    <span id="hud-experience-title" class="hud-experience-title">Ondas Interactivas</span>
+                    <span class="hud-status-dot"></span>
+                </div>
+            </div>
+
+            <div class="hud-right">
+                <!-- LiDAR Sim Trigger Button -->
+                <button id="btn-lidar-sim" class="hud-btn" title="Simular entrada LiDAR aleatoria">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/></svg>
+                    <span>Simular LiDAR</span>
+                </button>
+
+                <!-- Audio Toggle -->
+                <button id="btn-audio-toggle" class="hud-btn" title="Alternar Sonido">
+                    <svg id="icon-audio-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                    <svg id="icon-audio-off" class="hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+                </button>
+
+                <!-- Fullscreen Toggle -->
+                <button id="btn-fullscreen" class="hud-btn" title="Pantalla Completa">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Touch Hint Overlay (Fades out after first interaction) -->
+        <div id="touch-hint" class="touch-hint">
+            <div class="hint-pulse"></div>
+            <p>Toca la pantalla o haz clic para generar ondas</p>
+            <span class="hint-sub">Soporta multitoque y sensores externos (LiDAR)</span>
+        </div>
+    </div>
+
+    <!-- Application Script (ES Module) -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
