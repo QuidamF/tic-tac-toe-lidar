@@ -21,6 +21,7 @@ function App() {
   const [activeCell, setActiveCell] = useState(null);
   const [lidarConnected, setLidarConnected] = useState(false);
   const [socketStatus, setSocketStatus] = useState("disconnected");
+  const [showBoard, setShowBoard] = useState(true);
 
   // Estado del juego local
   const [gameState, setGameState] = useState({
@@ -387,6 +388,8 @@ function App() {
           onSave={handleSaveConfig}
           onCalibrate={handleCalibrate}
           lidarConnected={lidarConnected}
+          showBoard={showBoard}
+          onToggleShowBoard={setShowBoard}
         />
 
         {/* Panel Central/Derecho: Canvas de Calibración (ocupa el resto del espacio) */}
@@ -396,8 +399,8 @@ function App() {
             points={points}
             cluster={cluster}
             activeCell={activeCell}
-            onConfigChange={setConfig}
-            showBoard={false}
+            onConfigChange={handleConfigChange}
+            showBoard={showBoard}
           />
         </div>
       </main>

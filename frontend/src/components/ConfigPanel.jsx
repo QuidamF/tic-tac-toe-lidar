@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import BluetoothAudioPanel from "./BluetoothAudioPanel";
 
-const ConfigPanel = ({ config, onConfigChange, onSave, onCalibrate, lidarConnected }) => {
+const ConfigPanel = ({ config, onConfigChange, onSave, onCalibrate, lidarConnected, showBoard, onToggleShowBoard }) => {
   const [activeTab, setActiveTab] = useState("lidar");
   
   const handleChange = (key, val) => {
@@ -117,9 +117,64 @@ const ConfigPanel = ({ config, onConfigChange, onSave, onCalibrate, lidarConnect
             </div>
           </div>
 
-          {/* Sección Tablero */}
+          {/* Sección Tablero / Área de Proyección */}
           <div className="panel-section">
-            <h3>2. Dimensiones de Muro</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <h3 style={{ margin: 0 }}>2. Área Interactiva (Tablero)</h3>
+              {onToggleShowBoard && (
+                <label className="checkbox-label" style={{ fontSize: '0.85rem', cursor: 'pointer', userSelect: 'none' }}>
+                  <input
+                    type="checkbox"
+                    checked={!!showBoard}
+                    onChange={(e) => onToggleShowBoard(e.target.checked)}
+                    style={{ marginRight: '6px' }}
+                  />
+                  <span>📐 Ver Tablero</span>
+                </label>
+              )}
+            </div>
+
+            <div className="input-row">
+              <div className="input-group">
+                <label>Posición X Tablero (m)</label>
+                <input
+                  type="number"
+                  step="0.02"
+                  value={config.board_x !== undefined ? config.board_x : 0}
+                  onChange={(e) => handleChange("board_x", e.target.value)}
+                />
+              </div>
+              <div className="input-group">
+                <label>Posición Y Tablero (m)</label>
+                <input
+                  type="number"
+                  step="0.02"
+                  value={config.board_y !== undefined ? config.board_y : 0}
+                  onChange={(e) => handleChange("board_y", e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="input-row">
+              <div className="input-group">
+                <label>Ancho Tablero (m)</label>
+                <input
+                  type="number"
+                  step="0.02"
+                  value={config.board_width !== undefined ? config.board_width : 0}
+                  onChange={(e) => handleChange("board_width", e.target.value)}
+                />
+              </div>
+              <div className="input-group">
+                <label>Alto Tablero (m)</label>
+                <input
+                  type="number"
+                  step="0.02"
+                  value={config.board_height !== undefined ? config.board_height : 0}
+                  onChange={(e) => handleChange("board_height", e.target.value)}
+                />
+              </div>
+            </div>
 
             <div className="input-row">
               <div className="input-group">
